@@ -1,7 +1,7 @@
 #ifndef DLLMANAGER_H
 #define DLLMANAGER_H
 
-#include "Common/itestcasetemplate.h"
+#include "../itestcasetemplate.h"
 
 class DLLManager
 {

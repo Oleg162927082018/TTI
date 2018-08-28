@@ -1,7 +1,7 @@
 #ifndef DBMANAGER_H
 #define DBMANAGER_H
 
-#include "Common/itestcasetemplate.h"
+#include "../itestcasetemplate.h"
 
 #include "test-case.h"
 #include "test-case-cache.h"

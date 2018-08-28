@@ -1,6 +1,6 @@
 #include "runmanager.h"
-#include "Common/DBManager/dbmanager.h"
-#include "Common/DllManager/dllmanager.h"
+#include "../DBManager/dbmanager.h"
+#include "../DllManager/dllmanager.h"
 
 #include <QThreadPool>
 #include <QDebug>

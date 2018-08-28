@@ -1,8 +1,8 @@
 #ifndef TESTRUNNABLECLASS_H
 #define TESTRUNNABLECLASS_H
 
-#include "Common/itestcasetemplate.h"
-#include "Common/DBManager/test-result.h"
+#include "../itestcasetemplate.h"
+#include "../DBManager/test-result.h"
 
 #include <QObject>
 #include <QProcess>
