@@ -263,6 +263,7 @@ void DBManager::SaveRunDescription(QString testCaseFullFileName, QString runName
     QDir().mkpath(saveFileInfo.absolutePath());
 
     QFile file(saveFullFileName);
+    //if(file.exists()) { file.remove(); }
     if(file.open(QIODevice::WriteOnly)) {
         QTextStream stream(&file);
         stream << doc.toString();
@@ -540,7 +541,7 @@ void DBManager::SaveTestStatus(QString testCaseFullFileName, QString testRelativ
     }
 }
 
-void DBManager::SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *> *cache)
+void DBManager::SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *> *cache, bool isDeleteAfterRun, bool isUpdateLastResult)
 {
     QDomDocument doc;
 
@@ -549,6 +550,8 @@ void DBManager::SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *
     doc.insertBefore(xmlNode, doc.firstChild());
 
     QDomElement rootNode = doc.createElement("run");
+    rootNode.setAttribute("delete-after-run", isDeleteAfterRun?"true":"false");
+    rootNode.setAttribute("update-last-result", isUpdateLastResult?"true":"false");
     doc.appendChild(rootNode);
 
     int planCount = 0;

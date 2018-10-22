@@ -19,16 +19,16 @@ public:
     ~PlanNewDialog();
 
 private slots:
-    void on_planBtn_clicked();
+    void on_fileNameBtn_clicked();
 
-    void on_PlanNewDialog_accepted();
+    void on_isAddImediatelyBox_stateChanged(int arg1);
+
+    void on_okCancelBtns_accepted();
 
 private:
     Ui::PlanNewDialog *ui;
 
     QList<TestCaseFolder *> *testCaseList = 0;
-
-    void closeEvent(QCloseEvent *e);
 };
 
 #endif // PLANNEWDIALOG_H

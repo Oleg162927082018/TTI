@@ -16,7 +16,7 @@ void DLLManager::Init()
     DLLManager::FreeResources();
 
     //Looking for and load test-cases from dll
-    QDir appDir(QDir::cleanPath(qApp->applicationDirPath() + "/lib"));
+    QDir appDir(QDir::cleanPath(qApp->applicationDirPath() + "/lib/test"));
     appDir.setFilter(QDir::Files);
     appDir.setNameFilters(QStringList("*.dll"));
     appDir.setSorting(QDir::Name);

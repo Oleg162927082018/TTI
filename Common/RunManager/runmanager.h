@@ -15,6 +15,9 @@ struct PlanQueueItem
     QString fullFileName;
     QString description;
 
+    bool isUpdateLastResult;
+    bool isDeleteAfterRun;
+
     PlanStatus status;
 
     QStringList log;

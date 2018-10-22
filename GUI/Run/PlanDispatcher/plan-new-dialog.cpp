@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QFileDialog>
+#include <QMessageBox>
 
 
 
@@ -21,30 +22,41 @@ PlanNewDialog::~PlanNewDialog()
     delete ui;
 }
 
-void PlanNewDialog::closeEvent(QCloseEvent *e)
+void PlanNewDialog::on_isAddImediatelyBox_stateChanged(int arg1)
 {
-    if(QFileInfo(ui->planBox->text()).exists())
-    {
-        e->accept();
-    }
-    else
-    {
-        e->ignore();
-    }
+    ui->descBox->setEnabled(arg1 > 0);
 }
 
-void PlanNewDialog::on_planBtn_clicked()
+void PlanNewDialog::on_fileNameBtn_clicked()
 {
     QDir appFolder(qApp->applicationDirPath());
     appFolder.mkdir("plans");
 
-    ui->planBox->setText(QFileDialog::getSaveFileName(this, "Run Testing plan",
+    ui->fileNameBox->setText(QFileDialog::getSaveFileName(this, "Run Testing plan",
                             appFolder.filePath("plans"), "Testing plan (*.pln)"));
-
 }
 
-void PlanNewDialog::on_PlanNewDialog_accepted()
+void PlanNewDialog::on_okCancelBtns_accepted()
 {
-    DBManager::SaveTestingPlan(ui->planBox->text(), testCaseList);
-    RunManager::AddPlan(ui->planBox->text(), ui->descBox->text());
+    if(ui->fileNameBox->text().isEmpty())
+    {
+        QMessageBox mb("Error",
+                       "Field File name must be fill by a valid file name!",
+                       QMessageBox::Warning,
+                       QMessageBox::Ok | QMessageBox::Default,
+                       QMessageBox::NoButton,
+                       QMessageBox::NoButton);
+        mb.exec();
+
+        return;
+    }
+
+    DBManager::SaveTestingPlan(ui->fileNameBox->text(), testCaseList,
+                               ui->isDeleteAfterRunBox->isChecked(),
+                               ui->isUpdateLastBox->isChecked());
+
+    if(ui->isAddImediatelyBox->isChecked())
+    {
+        RunManager::AddPlan(ui->fileNameBox->text(), ui->descBox->toPlainText());
+    }
 }

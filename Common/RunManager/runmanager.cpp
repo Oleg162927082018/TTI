@@ -214,6 +214,8 @@ void RunManager::beginWatingPlan(PlanQueueItem *plan)
     QDomElement runElement = plan->planXml->firstChildElement("run");
     plan->processedTestCase = runElement.firstChildElement("test-case");
     plan->testCount = runElement.attribute("count", "0").toInt();
+    plan->isDeleteAfterRun = runElement.attribute("delete-after-run", "false").compare("true", Qt::CaseInsensitive) == 0;
+    plan->isUpdateLastResult = runElement.attribute("update-last-result", "false").compare("true", Qt::CaseInsensitive) == 0;
     plan->testFinished = 0;
 
     int newLogLine = plan->log.length();
@@ -256,6 +258,7 @@ void RunManager::beginPausePlan(PlanQueueItem *plan)
 void RunManager::endPlan(PlanQueueItem *plan)
 {
     if(plan->planXml != NULL) { delete plan->planXml; }
+    if(plan->isDeleteAfterRun) { QFile(plan->fullFileName).remove(); }
 
     int newLogLine = plan->log.length();
     plan->log.append("Plan finished");
@@ -300,7 +303,12 @@ void RunManager::cacheTestCaseData(PlanQueueItem *plan)
     QVector<int> *runList = DBManager::GetRunList(plan->processedTestCaseFullFileName);
 
     int newRunNum = 1;
-    if(runList->count() > 0) { newRunNum = runList->last() + 1; }
+    if(runList->count() > 0)
+    {
+        newRunNum = runList->last();
+        if(!plan->isUpdateLastResult) { ++newRunNum; }
+    }
+
     plan->processedTestCaseRunName = DBManager::GetRunName(newRunNum);
 
     plan->processedTestCaseWaitingTime = plan->processedTestCase.firstChildElement("waiting-sec").text().toInt();
@@ -395,18 +403,25 @@ void RunManager::beginTest(PlanQueueItem *plan)
     if(plan->processedTestCaseCompressionLevel > 0)
     {
         TestStatus *ts = DBManager::GetTestStatus(plan->processedTestCaseFullFileName, tstInf->testName);
+
+        //if benchmark recalculated need remove it
+        if(ts->benchmarks.remove(plan->processedTestCaseRunName.toInt()) >0 )
+        {
+            DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, tstInf->testName, ts);
+        }
+
         if((ts != NULL) && (ts->benchmarks.keys().count() > 0))
         {
             int lastBenchmarkRunNum = ts->benchmarks.keys().last();
             tstInf->testResult.benchmarkRunMark = DBManager::GetRunName(lastBenchmarkRunNum);
             tstInf->testResult.benchmarkOutMark = ts->benchmarks.value(lastBenchmarkRunNum).outMark;
             tstInf->testResult.benchmarkStatus = ts->benchmarks.value(lastBenchmarkRunNum).status;
-            delete ts;
-
             tstInf->benchmarkOutputFullFolderName =
                     DBManager::GetOutFolder(plan->processedTestCaseFullFileName,
                                             tstInf->testName, tstInf->testResult.benchmarkOutMark);
         }
+
+        if(ts != NULL) { delete ts; }
     }
 
 
@@ -442,6 +457,9 @@ void RunManager::beginTest(PlanQueueItem *plan)
     connect(test, &TestExecutor::finished, Handle, &RunManager::onTestFinished, Qt::QueuedConnection);
     connect(RunManager::Handle, &RunManager::killTests, test, &TestExecutor::doKill, Qt::DirectConnection);
 
+    //Clean output folder
+    QDir outFolder(tstInf->outputFullFolderName);
+    if(outFolder.exists()) { outFolder.removeRecursively(); }
     //Create output folder
     QDir().mkpath(tstInf->outputFullFolderName);
 
@@ -456,9 +474,16 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
 
     if(testInfo->isSaveOutput)
     {
+        //Save console output
         DBManager::SaveTestConsoleOutput(plan->processedTestCaseFullFileName,
                                          plan->processedTestCaseRunName,
                                          testInfo->testName, &(testInfo->consoleOutput));
+    }
+    else
+    {
+        //Clean console output
+        QFile(DBManager::GetResultFullFileName(
+                  plan->processedTestCaseFullFileName,plan->processedTestCaseRunName,testInfo->testName,"log")).remove();
     }
 
     if((testInfo->compressionLevel != 0) && (testInfo->testResult.benchmarkCompareResult == -1) && (testInfo->testResult.exitCode == 0))
@@ -471,9 +496,12 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
         benchmarkInfo.outMark = testInfo->testResult.outMark;
 
         TestStatus *ts = DBManager::GetTestStatus(plan->processedTestCaseFullFileName, testInfo->testName);
-        ts->benchmarks.insert(runNum, benchmarkInfo);
-        DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, testInfo->testName, ts);
-
+        if(ts != NULL)
+        {
+            ts->benchmarks.insert(runNum, benchmarkInfo);
+            DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, testInfo->testName, ts);
+            delete ts;
+        }
     }
 
     DBManager::SaveTestResult(plan->processedTestCaseFullFileName, plan->processedTestCaseRunName,

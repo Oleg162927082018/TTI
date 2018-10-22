@@ -13,7 +13,7 @@ QHash<QString, TagItem *> TagManager::tagCollections;
 void TagManager::Init()
 {
     //Looking for and load tag adapters from dll
-    QDir tagAdapterDir(QDir::cleanPath(qApp->applicationDirPath() + "/tag"));
+    QDir tagAdapterDir(QDir::cleanPath(qApp->applicationDirPath() + "/lib/tag"));
     tagAdapterDir.setFilter(QDir::Files);
     tagAdapterDir.setNameFilters(QStringList("*.dll"));
     tagAdapterDir.setSorting(QDir::Name);

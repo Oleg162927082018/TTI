@@ -96,9 +96,9 @@ void CreateTestCaseConfigurationListWidget::on_newConfigurationButton_clicked()
 
         ui->currentConfigBox->addItem(newCfgName);
 
-        CreateTestCaseConfigurationOneWidget *templateParamWidger =
+        CreateTestCaseConfigurationOneWidget *templateParamWidget =
                 new CreateTestCaseConfigurationOneWidget(DLLManager::GetTestCaseEditWidget(ID, this), this);
-        int newTabIndex = ui->configTabs->addTab(templateParamWidger, newCfgName);
+        int newTabIndex = ui->configTabs->addTab(templateParamWidget, newCfgName);
         ui->configTabs->setCurrentIndex(newTabIndex);
     }
 }

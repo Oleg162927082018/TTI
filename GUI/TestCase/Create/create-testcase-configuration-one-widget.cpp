@@ -5,9 +5,9 @@ CreateTestCaseConfigurationOneWidget::CreateTestCaseConfigurationOneWidget(ITest
     QWidget(parent), ui(new Ui::CreateTestCaseConfigurationOneWidget)
 {
     ui->setupUi(this);
-
-    extraWidget->setParent(this);
-    extraWidget->setGeometry(0,0,500,250);
+    ui->paramSplitter->insertWidget(0, extraWidget);
+    //extraWidget->setParent(this);
+    //extraWidget->setGeometry(0,0,500,250);
     this->ExtraWidget = extraWidget;
 }
 

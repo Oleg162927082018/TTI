@@ -33,7 +33,7 @@ public:
     static TestStatus *GetTestStatus(QString testCaseFullFileName, QString testRelativeName);
 
     // Test-plan
-    static void SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *> *cache);
+    static void SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *> *cache, bool isRunOnce, bool isUpdateLastResult);
     static QDomDocument *GetTestingPlan(QString planFullFileName);
 
     // Run description
