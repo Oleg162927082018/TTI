@@ -2,20 +2,15 @@
 
 #include <QStandardItem>
 
-TestCaseListController::TestCaseListController(QObject* parent) : QAbstractListModel(parent)
+OpenTestCaseListController::OpenTestCaseListController(QObject* parent) : QAbstractListModel(parent)
 {
 }
 
-void TestCaseListController::setDataSource(OpenTestCaseModel *model)
+int OpenTestCaseListController::rowCount(const QModelIndex &parent) const
 {
-    dataSource = model;
-}
-
-int TestCaseListController::rowCount(const QModelIndex &parent) const
-{
-    if(dataSource != NULL)
+    if(dataSource != nullptr)
     {
-        return dataSource->testCaseList.count();
+        return dataSource->count();
     }
     else
     {
@@ -23,14 +18,14 @@ int TestCaseListController::rowCount(const QModelIndex &parent) const
     }
 }
 
-QVariant TestCaseListController::data(const QModelIndex &index, int role) const
+QVariant OpenTestCaseListController::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) return QVariant();
 
-    if ((role == Qt::DisplayRole) && (dataSource != NULL) &&
-        (index.row() >= 0) && (index.row() < dataSource->testCaseList.length()))
+    if ((role == Qt::DisplayRole) && (dataSource != nullptr) &&
+        (index.row() >= 0) && (index.row() < dataSource->count()))
     {
-        return QVariant(dataSource->testCaseList.at(index.row())->Name);
+        return QVariant(dataSource->at(index.row())->name);
     }
     else
     {
@@ -38,12 +33,12 @@ QVariant TestCaseListController::data(const QModelIndex &index, int role) const
     }
 }
 
-void TestCaseListController::beginResetModel()
+void OpenTestCaseListController::beginResetModel()
 {
     QAbstractListModel::beginResetModel();
 }
 
-void TestCaseListController::endResetModel()
+void OpenTestCaseListController::endResetModel()
 {
     QAbstractListModel::endResetModel();
 }

@@ -1,6 +1,10 @@
 #ifndef TAGCOLLECTION_H
 #define TAGCOLLECTION_H
 
+#include <QString>
+#include <QList>
+#include <QDomDocument>
+
 struct TagCollection
 {
     QString fullFileName;
@@ -15,7 +19,7 @@ struct TagFolder
 struct Tag
 {
     QString type;
-    QDomDocument data;
+    QString data;
 };
 
 //----------------------------
@@ -25,11 +29,11 @@ struct TagItem
     QString name;
     QString path;
 
-    TagCollection *collection = NULL;
-    Tag *tag = NULL;
-    TagFolder *folder = NULL;
+    TagCollection *collection = nullptr;
+    Tag *tag = nullptr;
+    TagFolder *folder = nullptr;
 
-    TagItem *parent = NULL;
+    TagItem *parent = nullptr;
     QList<TagItem *> subItems;
 
     bool expanded;

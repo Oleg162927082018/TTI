@@ -26,7 +26,7 @@ void TagManager::Init()
         if (tagLib.load())
         {
             GetTagAdaptersFunction GetTagList =
-                    (GetTagAdaptersFunction)tagLib.resolve(GetTagAdaptersFunctionName);
+                    reinterpret_cast<GetTagAdaptersFunction>(tagLib.resolve(GetTagAdaptersFunctionName));
             {
                 QList<ITagAdapter *> taList = GetTagList();
                 for(int j = 0; j < taList.size(); j++)
@@ -39,8 +39,8 @@ void TagManager::Init()
     }
 
     //Looking for and load tag collections
-    //Now there is not config, so simply scan tag\data folder
-    QDir tagsDir(QDir::cleanPath(qApp->applicationDirPath() + "/tag/data"));
+    //Now there is not config, so simply scan tags folder
+    QDir tagsDir(QDir::cleanPath(qApp->applicationDirPath() + "/tags"));
     tagsDir.setFilter(QDir::Files);
     tagsDir.setNameFilters(QStringList("*.xml"));
     tagsDir.setSorting(QDir::Name);
@@ -64,8 +64,8 @@ void TagManager::FreeResources()
 
 void TagManager::FreeTagItem(TagItem *ti)
 {
-    if( ti->tag != NULL) { delete ti->tag; }
-    if( ti->folder != NULL) { delete ti->folder; }
+    if( ti->tag != nullptr) { delete ti->tag; }
+    if( ti->folder != nullptr) { delete ti->folder; }
 
     foreach(TagItem *tsi, ti->subItems)
     {
@@ -120,7 +120,7 @@ void TagManager::LoadTagCollection(QString fullFileName)
     if(QFileInfo(fullFileName).exists())
     {
         TagItem *tagCollection = DBManager::GetTagCollection(fullFileName);
-        if(tagCollection != NULL) { tagCollections.insert(tagCollection->name, tagCollection); }
+        if(tagCollection != nullptr) { tagCollections.insert(tagCollection->name, tagCollection); }
     }
 }
 
@@ -154,14 +154,14 @@ TagItem *TagManager::CreateTagFolder(TagItem *parent, QString name)
     parent->subItems.append(tagFolder);
 
     TagItem *tagCollection = tagFolder;
-    while(tagCollection->parent != NULL) { tagCollection = tagCollection->parent; }
+    while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
 
     DBManager::SaveTagCollection(tagCollection);
 
     return tagFolder;
 }
 
-TagItem *TagManager::AddTag(TagItem *parent, QString tagType, QString tagName, QDomDocument &tagData)
+TagItem *TagManager::AddTag(TagItem *parent, QString tagType, QString tagName, QString tagData)
 {
     TagItem *tagItem = new TagItem();
     tagItem->parent = parent;
@@ -176,7 +176,7 @@ TagItem *TagManager::AddTag(TagItem *parent, QString tagType, QString tagName, Q
     parent->subItems.append(tagItem);
 
     TagItem *tagCollection = parent;
-    while(tagCollection->parent != NULL) { tagCollection = tagCollection->parent; }
+    while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
 
     DBManager::SaveTagCollection(tagCollection);
 
@@ -186,12 +186,12 @@ TagItem *TagManager::AddTag(TagItem *parent, QString tagType, QString tagName, Q
 TagItem *TagManager::FindTagByPath(QString tagPath)
 {
     int p = tagPath.indexOf(':');
-    if(p < 0) { return NULL; }
+    if(p < 0) { return nullptr; }
 
     QString name = tagPath.left(p);
     QString tail = tagPath.right(tagPath.length() - p - 1);
 
-    TagItem *tagItem = NULL;
+    TagItem *tagItem = nullptr;
     for(int i = 0; i < tagCollections.keys().length(); i++)
     {
         if(tagCollections.keys().at(i).compare(name, Qt::CaseInsensitive) == 0)
@@ -199,7 +199,7 @@ TagItem *TagManager::FindTagByPath(QString tagPath)
             tagItem = tagCollections.value(tagCollections.keys().at(i));
         }
     }
-    if(tagItem == NULL) { return NULL; }
+    if(tagItem == nullptr) { return nullptr; }
 
     while(p > 0)
     {
@@ -226,7 +226,7 @@ TagItem *TagManager::FindTagByPath(QString tagPath)
             }
         }
 
-        if(!isFound) { return NULL; }
+        if(!isFound) { return nullptr; }
     }
 
     return tagItem;

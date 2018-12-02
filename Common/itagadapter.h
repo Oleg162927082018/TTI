@@ -10,11 +10,11 @@
 class ITagWidget : public QWidget
 {
 public:
-    explicit ITagWidget(QWidget *parent = 0) : QWidget(parent) { }
+    explicit ITagWidget(QWidget *parent = nullptr) : QWidget(parent) { }
     virtual ~ITagWidget() { }
 
-    virtual void SetData(QDomDocument *config, QDomDocument *params) = 0;
-    virtual void GetData(QDomDocument *config, QDomDocument *params) = 0;
+    virtual void SetData(QString config, QString params) = 0;
+    virtual void GetData(QString &config, QString &params) = 0;
 };
 
 class ITagAdapter

@@ -1,7 +1,9 @@
 #ifndef TESTCASETREEADAPTER_H
 #define TESTCASETREEADAPTER_H
 
-#include "Common/DBManager/test-case-cache.h"
+//#include "Common/DBManager/test-case-cache.h"
+#include "GUI/MainWindow/Model/mainwindow-treefolder.h"
+
 
 #include <QAbstractItemModel>
 #include <QList>
@@ -22,7 +24,7 @@ private:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    int findRow(TestCaseFolder *testFolder) const;
+    int findRow(MainWindowTreeFolder *testFolder) const;
 };
 
 #endif // TESTCASETREEADAPTER_H

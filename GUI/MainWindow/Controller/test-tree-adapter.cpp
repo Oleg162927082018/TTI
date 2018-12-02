@@ -24,12 +24,12 @@ QModelIndex TestTreeAdapter::index(int row, int column, const QModelIndex &paren
     if (!parent.isValid())
     {
         return createIndex(row, column,
-                           const_cast<TestCaseFolder*>(MainWindowModel::tree.at(row)));
+                           const_cast<MainWindowTreeFolder*>(MainWindowModel::tree.at(row)));
     }
     else
     {
-        TestCaseFolder* parentFolder = static_cast<TestCaseFolder*>(parent.internalPointer());
-        return createIndex(row, column, parentFolder->SubFolderList.at(row));
+        MainWindowTreeFolder* parentFolder = static_cast<MainWindowTreeFolder*>(parent.internalPointer());
+        return createIndex(row, column, parentFolder->subFolders.at(row));
     }
 }
 
@@ -41,8 +41,8 @@ QVariant TestTreeAdapter::data(const QModelIndex &index, int role) const
     {
         if(index.column() == 0)
         {
-            TestCaseFolder* folder = static_cast<TestCaseFolder*>(index.internalPointer());
-            return QVariant(folder->Name);
+            MainWindowTreeFolder* folder = static_cast<MainWindowTreeFolder*>(index.internalPointer());
+            return QVariant(folder->name);
         }
     }
     return QVariant();
@@ -56,8 +56,8 @@ int TestTreeAdapter::rowCount(const QModelIndex &parent) const
     }
     else
     {
-        TestCaseFolder* parentInfo = static_cast<TestCaseFolder*>(parent.internalPointer());
-        return parentInfo->SubFolderList.count();
+        MainWindowTreeFolder* parentFolder = static_cast<MainWindowTreeFolder*>(parent.internalPointer());
+        return parentFolder->subFolders.count();
     }
 }
 
@@ -70,10 +70,10 @@ QModelIndex TestTreeAdapter::parent(const QModelIndex &index) const
 {
     if (!index.isValid()) { return QModelIndex(); }
 
-    TestCaseFolder* folder = static_cast<TestCaseFolder*>(index.internalPointer());
-    if (folder->ParentFolder != 0)
+    MainWindowTreeFolder* folder = static_cast<MainWindowTreeFolder*>(index.internalPointer());
+    if (folder->parentFolder != nullptr)
     {
-        return createIndex(findRow(folder->ParentFolder), 0, folder->ParentFolder);
+        return createIndex(findRow(folder->parentFolder), 0, folder->parentFolder);
     }
     else
     {
@@ -81,14 +81,14 @@ QModelIndex TestTreeAdapter::parent(const QModelIndex &index) const
     }
 }
 
-int TestTreeAdapter::findRow(TestCaseFolder *testFolder) const
+int TestTreeAdapter::findRow(MainWindowTreeFolder *treeFolder) const
 {
-    if(testFolder->ParentFolder == NULL)
+    if(treeFolder->parentFolder == nullptr)
     {
-        return MainWindowModel::tree.indexOf(testFolder);
+        return MainWindowModel::tree.indexOf(treeFolder);
     }
     else
     {
-        return testFolder->ParentFolder->SubFolderList.indexOf(testFolder);
+        return treeFolder->parentFolder->subFolders.indexOf(treeFolder);
     }
 }

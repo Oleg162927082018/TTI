@@ -12,11 +12,12 @@ public:
     static QStringList GetTestCaseAdapterIDList();
     static ITestCaseAdapter *GetTestCaseAdapter(QString id);
 
-    static ITestCaseEditWidget *GetTestCaseEditWidget(QString id, QWidget *parent = 0);
-    static IResultCompareWidget *GetTestCaseResultCompareWidget(QString id, QWidget *parent = 0);
+    static ITestCaseEditWidget *GetTestCaseEditWidget(QString id, QWidget *parent = nullptr);
+    static IResultCompareWidget *GetTestCaseResultCompareWidget(QString id, QWidget *parent = nullptr);
 
-    static void GetTestCaseRunCommand(QString id, QString testCaseFullFileName, QDomDocument extraParams, QDomDocument testParams,
-                                      QString outputFullFolderName, QString &out_cmd, QStringList &out_arg, QString &out_workDir);
+    static void GetTestCaseRunCommand(QString id, QString testCaseFullFileName,
+                                      QString extraParams, QString testParams, QString outputFullFolderName,
+                                      QString &out_cmd, QStringList &out_arg, QString &out_workDir);
 
     static ITestOutputComparator *GetTestCaseComparator(QString id);
 

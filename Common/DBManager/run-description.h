@@ -7,8 +7,6 @@
 
 struct RunDescription
 {
-    bool Checked;
-
     int Num;
     QDateTime LocalDateTimeOfStart;
     QString TestPlanFullFileName;

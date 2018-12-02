@@ -21,10 +21,10 @@ TagCreateDialog::TagCreateDialog(QWidget *parent) :
     for(int i = 0; i < tagTypeIDList.length(); i++)
     {
         ITagAdapter *tagAdapter = TagManager::GetTagAdapter(tagTypeIDList.at(i));
-        if(tagAdapter != NULL)
+        if(tagAdapter != nullptr)
         {
             ITagWidget *tagWidget = tagAdapter->GetTagCreateWidget(this);
-            if(tagWidget != NULL)
+            if(tagWidget != nullptr)
             {
                 ui->editorStacked->insertWidget(ui->editorStacked->count(), tagWidget);
             }
@@ -49,10 +49,10 @@ TagItem *TagCreateDialog::createTag(QWidget *parent, TagItem *parentTagItem)
 
     if(dialog.exec() == QDialog::Accepted)
     {
-        QDomDocument config;
-        QDomDocument data;
+        QString config;
+        QString data;
         ITagWidget *tagWidget = static_cast<ITagWidget *>(dialog.ui->editorStacked->currentWidget());
-        tagWidget->GetData(&config, &data);
+        tagWidget->GetData(config, data);
 
         return TagManager::AddTag(parentTagItem,
                                   dialog.tagTypeIDList.at(dialog.ui->tagTypeList->currentIndex().row()),
@@ -73,7 +73,7 @@ void TagCreateDialog::on_tagTypeListSelectionChanged(const QItemSelection &newSe
     {
         QString key = tagTypeIDList.at(pos);
         ITagAdapter *tagAdapter = TagManager::GetTagAdapter(key);
-        if(tagAdapter != NULL)
+        if(tagAdapter != nullptr)
         {
             ui->descBox->setText(tagAdapter->Description());
         }

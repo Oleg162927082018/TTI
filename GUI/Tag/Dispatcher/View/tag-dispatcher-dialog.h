@@ -49,7 +49,7 @@ private slots:
 private:
     Ui::TagDispatcherDialog *ui;
 
-    TagItem *selectResult = NULL;
+    TagItem *selectResult = nullptr;
 
     bool isDialogUpdating = false;
     void BeginDialogUpdate();

@@ -33,7 +33,7 @@ public:
     static void DeleteTagFolder(QString fullFileNameCollection, QString folderName);*/
 
     //Tag methods
-    static TagItem *AddTag(TagItem *parent, QString tagType, QString tagName, QDomDocument &tagData);
+    static TagItem *AddTag(TagItem *parent, QString tagType, QString tagName, QString tagData);
     /*static void EditTag(QString fullFileNameCollection, QString tagTemplateID, QString tagID, QString newTagName, QDomDocument newTagData);
     static void DeleteTag(QString fullFileNameCollection, QString tagID);*/
     static TagItem *FindTagByPath(QString tagPath);

@@ -4,172 +4,247 @@
 
 #include <QFileInfo>
 
-QList<TestCaseFolder *> MainWindowModel::tree;
-
-QList<TestCase *> MainWindowModel::testCaseList;
+QList<MainWindowTreeFolder *> MainWindowModel::tree;
 
 MainWindowModel::MainWindowModel()
 {
 
 }
 
-TestCaseFolder *MainWindowModel::OpenTestCase(TestCase *tc)
+void MainWindowModel::AddRunHeader(MainWindowTreeFolder *treeFolder, RunDescription *runDesc, bool isVisible)
+{
+    MainWindowTableHeader *tHeader = new MainWindowTableHeader();
+    tHeader->name = getTableHeader(runDesc);
+    tHeader->runDescription = runDesc;
+
+    treeFolder->fullTableHeaders->insert(tHeader->runDescription->Num, tHeader);
+    if(isVisible) { treeFolder->visibleTableHeaders->insert(tHeader->runDescription->Num, tHeader); }
+}
+
+void MainWindowModel::AddTableItem(MainWindowTreeFolder *treeFolder, MainWindowTableItem *tableItem)
+{
+    if(treeFolder != nullptr)
+    {
+        treeFolder->fullTableItems.append(tableItem);
+        treeFolder->visibleTableItems.append(tableItem);
+
+        AddTableItem(treeFolder->parentFolder, tableItem);
+    }
+}
+
+void MainWindowModel::LoadTreeFolder(MainWindowTreeFolder *treeFolder, QString relativeTreeFolderName)
+{
+    QStringList subFolders = DBManager::GetTestCaseFolders(treeFolder->ownerTestCase->fullFileName, relativeTreeFolderName);
+    QList<TestStatus *> subItems = DBManager::GetTestCaseFolderItems(treeFolder->ownerTestCase->fullFileName, relativeTreeFolderName);
+
+    for(int i = 0; i < subFolders.count(); i++)
+    {
+        MainWindowTreeFolder *subTreeFolder = new MainWindowTreeFolder();
+        subTreeFolder->name = subFolders.at(i);
+        subTreeFolder->parentFolder = treeFolder;
+        subTreeFolder->ownerTestCase = treeFolder->ownerTestCase;
+        subTreeFolder->fullTableHeaders = treeFolder->fullTableHeaders;
+        subTreeFolder->visibleTableHeaders = treeFolder->visibleTableHeaders;
+
+        QString subFolder = relativeTreeFolderName;
+        if(!subFolder.isEmpty()) { subFolder += "/"; }
+        subFolder += subFolders.at(i);
+        LoadTreeFolder(subTreeFolder, subFolder);
+
+        treeFolder->subFolders.append(subTreeFolder);
+    }
+
+    for(int i = 0; i < subItems.count(); i++)
+    {
+        MainWindowTableItem *tableItem = new MainWindowTableItem();
+        TestStatus *status = subItems.at(i);
+        tableItem->status = status;
+        tableItem->name = status->relativeFileName.mid(status->relativeFileName.lastIndexOf("/") + 1);
+        tableItem->ownerTestCase = treeFolder->ownerTestCase;
+        tableItem->fullTableHeaders = treeFolder->fullTableHeaders;
+        tableItem->visibleTableHeaders = treeFolder->visibleTableHeaders;
+
+        AddTableItem(treeFolder, tableItem);
+    }
+
+}
+
+MainWindowTreeFolder *MainWindowModel::LoadTestCase(TestCase *tc)
 {
     //Check test-case already open
-    for(int i = 0; i < testCaseList.length(); i++)
+    for(int i = 0; i < tree.count(); i++)
     {
-        QString fullFileName = testCaseList.at(i)->FullFileName;
-        if(fullFileName.compare(tc->FullFileName, Qt::CaseInsensitive) == 0)
+        QString fullFileName = tree.at(i)->ownerTestCase->fullFileName;
+        if(fullFileName.compare(tc->fullFileName, Qt::CaseInsensitive) == 0)
         {
-            return NULL;
+            return nullptr;
         }
     }
 
     //Load test-case
-    tc->Checked = true;
-    testCaseList.append(tc);
+    MainWindowTreeFolder *testCaseFolder = new MainWindowTreeFolder();
+    testCaseFolder->name = tc->fullFileName.mid(tc->fullFileName.lastIndexOf("/") + 1);
+    testCaseFolder->ownerTestCase = tc;
+    testCaseFolder->fullTableHeaders = new QMap<int, MainWindowTableHeader *>();
+    testCaseFolder->visibleTableHeaders = new QMap<int, MainWindowTableHeader *>();
 
-    // Load folder cache
-    TestCaseFolder *testCaseStatusFolders = DBManager::GetTestCaseCache(tc->FullFileName);
+    LoadTreeFolder(testCaseFolder,"");
 
-    //Replace STATUS to test-case name
-    testCaseStatusFolders->Checked = true;
-    testCaseStatusFolders->Expanded = false;
-    testCaseStatusFolders->Name = tc->Name;
-    testCaseStatusFolders->ownerTestCase = tc;
-    setTestCaseOwner(testCaseStatusFolders, tc);
-
-    for(int j = 0; j < testCaseStatusFolders->TestList.count(); j++)
-    {
-        TestCaseItem *item = testCaseStatusFolders->TestList.at(j);
-        item->Checked = true;
-        item->status = DBManager::GetTestStatus(tc->FullFileName, item->RelativeFileName);
-        item->ownerTestCase = tc;
-    }
-
-    MainWindowModel::tree.append(testCaseStatusFolders);
-
-    return testCaseStatusFolders;
+    MainWindowModel::tree.append(testCaseFolder);
+    return testCaseFolder;
 }
 
-void MainWindowModel::setTestCaseOwner(TestCaseFolder *folder, TestCase *tc)
+void MainWindowModel::setTestCaseOwner(MainWindowTreeFolder *folder, TestCase *tc)
 {
-    folder->Expanded = false;
+    folder->expanded = false;
     folder->ownerTestCase = tc;
-    for(int i = 0; i < folder->SubFolderList.length(); i++)
+    for(int i = 0; i < folder->subFolders.length(); i++)
     {
-        setTestCaseOwner(folder->SubFolderList.at(i), tc);
+        setTestCaseOwner(folder->subFolders.at(i), tc);
     }
 }
 
-void MainWindowModel::UpdateRunDescriptions(TestCase *tc)
+void MainWindowModel::UpdateRunDescriptions(MainWindowTreeFolder *testCaseFolder)
 {
-    QVector<int> *runList = DBManager::GetRunList(tc->FullFileName);
-    QMap<int, RunDescription *> *runDescriptions = &(tc->RunDescriptions);
-    if(runList->length() > runDescriptions->keys().length())
-    {
-        for(int i = runDescriptions->keys().length(); i < runList->length(); i++)
-        {
-            RunDescription *runDesc =
-                DBManager::GetRunDescription(tc->FullFileName,
-                                             DBManager::GetRunName(runList->at(i)));
+    QString testCaseFullFileName = testCaseFolder->ownerTestCase->fullFileName;
+    QVector<int> *runList = DBManager::GetRunList(testCaseFullFileName);
 
-            runDesc->Checked = true;
-            runDescriptions->insert(runDesc->Num, runDesc);
+    for(int i = 0; i < runList->count(); i++)
+    {
+        int runNum = runList->at(i);
+        if(!testCaseFolder->fullTableHeaders->keys().contains(runNum)) {
+
+            RunDescription *rd = DBManager::GetRunDescription(testCaseFullFileName, DBManager::GetRunName(runNum));
+
+            MainWindowTableHeader *th = new MainWindowTableHeader();
+            th->name = getTableHeader(rd);
+            th->runDescription = rd;
+            testCaseFolder->fullTableHeaders->insert(runNum, th);
         }
     }
     delete runList;
 }
 
-void MainWindowModel::LoadFolderResults(TestCaseFolder *folder)
+void MainWindowModel::LoadFolderResults(MainWindowTreeFolder *folder)
 {
-    if(folder == NULL) { return; }
+    if(folder == nullptr) { return; }
 
     TestCase *tc = folder->ownerTestCase;
 
-    if(tc == NULL) { return; }
+    if(tc == nullptr) { return; }
 
-    for(int i = 0; i < folder->TestList.length(); i++)
+    for(int i = 0; i < folder->visibleTableItems.length(); i++)
     {
-        TestCaseItem *test = folder->TestList.at(i);
+        MainWindowTableItem *test = folder->visibleTableItems.at(i);
 
-        for(int k = 0; k < tc->RunDescriptions.count(); k++)
+        for(int k = 0; k < folder->visibleTableHeaders->count(); k++)
         {
-            int keyRun = tc->RunDescriptions.keys().at(k);
-            if(tc->RunDescriptions.value(keyRun)->Checked)
-            {
-                TestResult *r = DBManager::GetTestResult(tc->FullFileName,
-                                                         test->RelativeFileName,
-                                                         DBManager::GetRunName(keyRun));
-                test->results.insert(keyRun, r);
-            }
+            int keyRun = folder->visibleTableHeaders->keys().at(k);
+            TestResult *r = DBManager::GetTestResult(tc->fullFileName,
+                                                     test->status->relativeFileName,
+                                                     DBManager::GetRunName(keyRun));
+            test->results.insert(keyRun, r);
         }
     }
 }
 
-void MainWindowModel::LoadRunResults(TestCaseFolder *folder, RunDescription *run)
+void MainWindowModel::LoadRunResults(MainWindowTreeFolder *folder, MainWindowTableHeader *run)
 {
-    if(run == NULL) { return; }
+    if(run == nullptr) { return; }
 
-    if(folder == NULL) { return; }
+    if(folder == nullptr) { return; }
 
     TestCase *tc = folder->ownerTestCase;
 
-    if(tc == NULL) { return; }
+    if(tc == nullptr) { return; }
 
-    //Looking for runKey
-    int runNum = tc->RunDescriptions.values().indexOf(run);
-    if(runNum < 0) { return; } else { runNum++; }
-
-    for(int i = 0; i < folder->TestList.length(); i++)
+    for(int i = 0; i < folder->visibleTableItems.count(); i++)
     {
-        TestCaseItem *test = folder->TestList.at(i);
+        MainWindowTableItem *test = folder->visibleTableItems.at(i);
+        TestResult *r = DBManager::GetTestResult(tc->fullFileName,
+                                                 test->status->relativeFileName,
+                                                 DBManager::GetRunName(run->runDescription->Num));
 
-        TestResult *r = DBManager::GetTestResult(tc->FullFileName,
-                                                 test->RelativeFileName,
+        test->results.insert(run->runDescription->Num, r);
+    }
+}
+
+void MainWindowModel::LoadTestResults(MainWindowTreeFolder *folder, MainWindowTableItem *test)
+{
+    if(test == nullptr) { return; }
+    if(folder == nullptr) { return; }
+
+    TestCase *tc = folder->ownerTestCase;
+
+    if(tc == nullptr) { return; }
+
+    for(int k = 0; k < folder->visibleTableHeaders->count(); k++)
+    {
+        int runNum = folder->visibleTableHeaders->keys().at(k);
+        TestResult *r = DBManager::GetTestResult(tc->fullFileName,
+                                                 test->status->relativeFileName,
                                                  DBManager::GetRunName(runNum));
         test->results.insert(runNum, r);
     }
 }
 
-void MainWindowModel::LoadTestResults(TestCaseFolder *folder, TestCaseItem *test)
+void MainWindowModel::LoadOneResult(MainWindowTreeFolder *folder, MainWindowTableItem *test, MainWindowTableHeader *run)
 {
-    if(test == NULL) { return; }
-
-    if(folder == NULL) { return; }
+    if(run == nullptr) { return; }
+    if(test == nullptr) { return; }
+    if(folder == nullptr) { return; }
 
     TestCase *tc = folder->ownerTestCase;
 
-    if(tc == NULL) { return; }
+    if(tc == nullptr) { return; }
 
-    for(int k = 0; k < tc->RunDescriptions.count(); k++)
+    TestResult *r = DBManager::GetTestResult(tc->fullFileName,
+                                             test->status->relativeFileName,
+                                             DBManager::GetRunName(run->runDescription->Num));
+    test->results.insert(run->runDescription->Num, r);
+}
+
+void MainWindowModel::DeleteTree()
+{
+    for(int i = 0; i < tree.count(); i++)
     {
-        int keyRun = tc->RunDescriptions.keys().at(k);
-        TestResult *r = DBManager::GetTestResult(tc->FullFileName,
-                                                 test->RelativeFileName,
-                                                 DBManager::GetRunName(keyRun));
-        test->results.insert(keyRun, r);
+        MainWindowTreeFolder *treeFolder = tree.at(i);
+
+        delete treeFolder->ownerTestCase;
+
+        for(int j = 0; j < treeFolder->fullTableHeaders->count(); j++)
+        {
+            MainWindowTableHeader *tHeader = treeFolder->fullTableHeaders->values().at(j);
+            delete tHeader;
+        }
+        delete treeFolder->fullTableHeaders;
+        delete treeFolder->visibleTableHeaders;
+
+        for(int j = 0; j < treeFolder->fullTableItems.count(); j++)
+        {
+            MainWindowTableItem *tableItem = treeFolder->fullTableItems.at(j);
+            delete tableItem->status;
+            for(int k = 0; k < tableItem->results.count(); k++)
+            {
+                delete tableItem->results.values().at(k);
+            }
+        }
+
+        DeleteTreeFolder(treeFolder);
     }
 }
 
-void MainWindowModel::LoadOneResult(TestCaseFolder *folder, TestCaseItem *test, RunDescription *run)
+void MainWindowModel::DeleteTreeFolder(MainWindowTreeFolder *treeFolder)
 {
-    if(run == NULL) { return; }
+    for(int i = 0; i < treeFolder->subFolders.count(); i++)
+    {
+        DeleteTreeFolder(treeFolder->subFolders.at(i));
+    }
 
-    if(test == NULL) { return; }
+    delete treeFolder;
+}
 
-    if(folder == NULL) { return; }
-
-    TestCase *tc = folder->ownerTestCase;
-
-    if(tc == NULL) { return; }
-
-    //Looking for runKey
-    int runNum = tc->RunDescriptions.values().indexOf(run);
-    if(runNum < 0) { return; } else { runNum++; }
-
-    TestResult *r = DBManager::GetTestResult(tc->FullFileName,
-                                             test->RelativeFileName,
-                                             DBManager::GetRunName(runNum));
-    test->results.insert(runNum, r);
+QString MainWindowModel::getTableHeader(RunDescription *rd)
+{
+    return rd->LocalDateTimeOfStart.toString("dd-MMM-yyyy HH:mm:ss");
 }

@@ -1,7 +1,6 @@
 #ifndef ITESTCASETEMPLATE_H
 #define ITESTCASETEMPLATE_H
 
-#include <QtXml/QDomDocument>
 #include <QString>
 #include <QWidget>
 #include <QMap>
@@ -31,23 +30,27 @@ public:
 class ITestCaseEditWidget : public QWidget
 {
 public:
-    explicit ITestCaseEditWidget(QWidget *parent = 0) : QWidget(parent) { }
+    explicit ITestCaseEditWidget(QWidget *parent = nullptr) : QWidget(parent) { }
     virtual ~ITestCaseEditWidget() { }
 
-    virtual void SetData(QDomDocument *config, QDomDocument *params) = 0;
-    virtual void GetData(QDomDocument *config, QDomDocument *params) = 0;
-    virtual QMap<QString, QDomDocument *> *GetTestList() = 0;
+    virtual void SetData(QString config, QString params) = 0;
+    virtual void GetData(QString &config, QString &params) = 0;
+    //Return collection of pairs path of test and string which contain data for run test
+    //Example: <"rootFolder/subFolder/subSubFolder/test-001.script","<path src="0">test-001.script</path>"
+    virtual QMap<QString, QString> *GetTestList() = 0;
 
 };
 
 class IResultCompareWidget : public QWidget
 {
 public:
-    explicit IResultCompareWidget(QWidget *parent = 0) : QWidget(parent) { }
+    explicit IResultCompareWidget(QWidget *parent = nullptr) : QWidget(parent) { }
     virtual ~IResultCompareWidget() { }
 
     virtual void SetLeftValue(QString leftValueFullFolderPath) = 0;
+    virtual void ClearLeftValue() = 0;
     virtual void SetRightValue(QString rightValueFullFolderPath) = 0;
+    virtual void ClearRightValue() = 0;
 };
 
 class ITestCaseAdapter
@@ -59,13 +62,13 @@ public:
     virtual const QString Name() = 0;
     virtual const QString Description() = 0;
 
-    virtual ITestCaseEditWidget *GetTestCaseEditWidget(QWidget *parent = 0) = 0;
+    virtual ITestCaseEditWidget *GetTestCaseEditWidget(QWidget *parent = nullptr) = 0;
 
-    virtual void GetRunCommand(QString testCaseFullFileName, QDomDocument extraParams, QDomDocument testParams, QString outputFullFolderName,
+    virtual void GetRunCommand(QString testCaseFullFileName, QString extraTestCaseParams, QString testParams, QString outputFullFolderName,
                                QString &out_cmd, QStringList &out_arg, QString &out_workDir) = 0;
 
     virtual ITestOutputComparator *GetComparator() = 0;
-    virtual IResultCompareWidget *GetResultCompareWidget(QWidget *parent = 0) = 0;
+    virtual IResultCompareWidget *GetResultCompareWidget(QWidget *parent = nullptr) = 0;
 };
 
 extern "C" Q_DECL_EXPORT QList<ITestCaseAdapter *> GetTestCaseAdapters(void);

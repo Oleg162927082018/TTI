@@ -1,16 +1,23 @@
-#include <QBrush>
-
 #include "test-table-adapter.h"
+
+#include <QBrush>
 
 TestTableAdapter::TestTableAdapter()
 {
 
 }
 
-void TestTableAdapter::Init(QList<TestCaseItem*> *rowHeaders, QMap<int, RunDescription *> *columnHeaders)
+bool TestTableAdapter::isInitNeeded(QList<MainWindowTableItem*> *rows, QMap<int, MainWindowTableHeader *> *headers)
 {
-    rowHeaderSource = rowHeaders;
-    columnHeaderSource = columnHeaders;
+    if((rowSource != rows) ||
+            (headerSource != headers)) { return true; }
+    else { return false; }
+}
+
+void TestTableAdapter::Init(QList<MainWindowTableItem*> *rows, QMap<int, MainWindowTableHeader *> *headers)
+{
+    rowSource = rows;
+    headerSource = headers;
 }
 
 void TestTableAdapter::beginResetModel()
@@ -23,11 +30,20 @@ void TestTableAdapter::endResetModel()
     QAbstractTableModel::endResetModel();
 }
 
+MainWindowTableItem *TestTableAdapter::getRowData(int pos)
+{
+    if((0 <= pos) && (pos < rowSource->count())) {
+        return rowSource->at(pos);
+    } else {
+        return nullptr;
+    }
+}
+
 int TestTableAdapter::rowCount(const QModelIndex &parent) const
 {
-    if(rowHeaderSource != NULL)
+    if(rowSource != nullptr)
     {
-        return rowHeaderSource->count();
+        return rowSource->count();
     }
     else
     {
@@ -37,9 +53,9 @@ int TestTableAdapter::rowCount(const QModelIndex &parent) const
 
 int TestTableAdapter::columnCount(const QModelIndex &parent) const
 {
-    if(columnHeaderSource != 0)
+    if(headerSource != nullptr)
     {
-        return columnHeaderSource->count() + 1;
+        return headerSource->count() + 1;
     }
     else
     {
@@ -56,30 +72,22 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
     {
         if(col == 0)
         {
-            return QVariant(rowHeaderSource->at(row)->Name);
+            return QVariant(rowSource->at(row)->name);
         }
         else if(col > 0)
         {
+            int runNum = headerSource->keys().at(col - 1);
 
-            int runNum = columnHeaderSource->keys().at(col - 1);
+            MainWindowTableItem *test = rowSource->at(row);
+            if(test->results.keys().contains(runNum)) {
 
-            TestCaseItem *test = rowHeaderSource->at(row);
-            if(test->status->benchmarks.contains(runNum))
-            {
-                return QVariant("Benchmark updated");
-            }
-            else
-            {
-                TestResult *r = test->results.value(runNum);
-                if(r != NULL)
-                {
-                    return QVariant(r->status);
+                if(test->status->benchmarks.contains(runNum)) {
+                    return QVariant("Benchmark updated");
+                } else {
+                    return QVariant(test->results.value(runNum)->status);
                 }
-                else
-                {
-                    return QVariant();
-                }
-            }
+
+            } else { return QVariant(); }
         }
     }
 
@@ -91,24 +99,17 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
         }
         else
         {
-            int runNum = columnHeaderSource->keys().at(col - 1);
-            TestCaseItem *test = rowHeaderSource->at(row);
-            if(test->status->benchmarks.contains(runNum))
-            {
-                return QVariant(QColor("#008080"));
-            }
-            else
-            {
-                TestResult *r = test->results.value(runNum);
-                if(r != NULL)
-                {
-                    return QBrush(r->color);
-                }
-                else
-                {
-                    return QVariant();
+            int runNum = headerSource->keys().at(col - 1);
+            MainWindowTableItem *test = rowSource->at(row);
+            if(test->results.keys().contains(runNum)) {
+
+                if(test->status->benchmarks.contains(runNum)) {
+                    return QVariant(QColor("#008080"));
+                } else {
+                    return QBrush(test->results.value(runNum)->color);
                 }
             }
+            else { return QVariant(); }
         }
     }
 
@@ -126,8 +127,8 @@ QVariant TestTableAdapter::headerData(int section, Qt::Orientation orientation, 
                 case 0:
                     return "Test Name";
                 default:
-                    int key = columnHeaderSource->keys().at(section - 1);
-                    return columnHeaderSource->value(key)->LocalDateTimeOfStart.toString(Qt::SystemLocaleShortDate);
+                    int key = headerSource->keys().at(section - 1);
+                    return headerSource->value(key)->name;
             }
         }
 
