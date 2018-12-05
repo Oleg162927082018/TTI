@@ -1,4 +1,4 @@
-VERSION = 2.1.0.0
+VERSION = 2.2.0.0
 QMAKE_TARGET_PRODUCT = Total Test Integrator
 QMAKE_TARGET_DESCRIPTION = Test-case integrator
 QMAKE_TARGET_COPYRIGHT = Copyright\xA9 Oleg Kopyev 2016-2017

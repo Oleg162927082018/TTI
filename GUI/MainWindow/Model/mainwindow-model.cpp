@@ -32,6 +32,37 @@ void MainWindowModel::AddTableItem(MainWindowTreeFolder *treeFolder, MainWindowT
     }
 }
 
+void MainWindowModel::ClearVisibleTableItems(MainWindowTreeFolder *treeFolder)
+{
+    if(treeFolder != nullptr)
+    {
+        treeFolder->visibleTableItems.clear();
+        foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
+            ClearVisibleTableItems(subFolder);
+        }
+    }
+}
+
+void MainWindowModel::SetVisibleTableItem(MainWindowTreeFolder *treeFolder, MainWindowTableItem *tableItem, bool isVisible)
+{
+    if(treeFolder != nullptr)
+    {
+        if(treeFolder->fullTableItems.contains(tableItem))
+        {
+
+            if(treeFolder->visibleTableItems.contains(tableItem)) {
+                if(!isVisible) { treeFolder->visibleTableItems.removeOne(tableItem); }
+            } else {
+                if(isVisible) { treeFolder->visibleTableItems.append(tableItem); }
+            }
+
+            foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
+                SetVisibleTableItem(subFolder, tableItem, isVisible);
+            }
+        }
+    }
+}
+
 void MainWindowModel::LoadTreeFolder(MainWindowTreeFolder *treeFolder, QString relativeTreeFolderName)
 {
     QStringList subFolders = DBManager::GetTestCaseFolders(treeFolder->ownerTestCase->fullFileName, relativeTreeFolderName);

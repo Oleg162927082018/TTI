@@ -39,6 +39,16 @@ MainWindowTableItem *TestTableAdapter::getRowData(int pos)
     }
 }
 
+int TestTableAdapter::rowByData(MainWindowTableItem *data)
+{
+    if(rowSource != nullptr)
+    {
+        return rowSource->indexOf(data);
+    }
+
+    return -1;
+}
+
 int TestTableAdapter::rowCount(const QModelIndex &parent) const
 {
     if(rowSource != nullptr)

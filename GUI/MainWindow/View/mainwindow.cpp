@@ -105,6 +105,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
 MainWindow::~MainWindow()
 {
+    if(filterDlg != nullptr) { delete filterDlg; }
+
     DLLManager::FreeResources();
     RunManager::FreeResources();
     TagManager::FreeResources();

@@ -36,14 +36,17 @@ public:
 
 
     static void AddRunHeader(MainWindowTreeFolder *treeFolder, RunDescription *runDesc, bool isVisible);
-    static void AddTableItem(MainWindowTreeFolder *treeFolder, MainWindowTableItem *tableItem);
     static void DeleteTree();
+
+    static void ClearVisibleTableItems(MainWindowTreeFolder *treeFolder);
+    static void SetVisibleTableItem(MainWindowTreeFolder *treeFolder, MainWindowTableItem *tableItem, bool isVisible);
 
 private:
     static void setTestCaseOwner(MainWindowTreeFolder *folder, TestCase *tc);
+    static void AddTableItem(MainWindowTreeFolder *treeFolder, MainWindowTableItem *tableItem);
+    static QString getTableHeader(RunDescription *rd);
     static void LoadTreeFolder(MainWindowTreeFolder *treeFolder, QString relativeTreeFolderName);
     static void DeleteTreeFolder(MainWindowTreeFolder *treeFolder);
-    static QString getTableHeader(RunDescription *rd);
 };
 
 #endif // MAINWINDOWMODEL_H

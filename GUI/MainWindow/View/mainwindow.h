@@ -20,6 +20,8 @@
 
 #include "GUI/Run/PlanDispatcher-New/View/plan-new-dialog.h"
 
+#include <GUI/Search/View/set-filter-dialog.h>
+
 namespace Ui {
 class MainWindow;
 }
@@ -117,8 +119,9 @@ private:
 
     void UpdateTestStatus(int runNum, QString newStatus, bool checked);
 
-
     QMap<int, MainWindowTableHeader *> *compareComboBox_dataSource = nullptr;
+
+    SetFilterDialog *filterDlg = nullptr;
 };
 
 #endif // MAINWINDOW_H

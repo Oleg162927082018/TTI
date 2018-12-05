@@ -15,6 +15,8 @@ public:
     explicit SetFilterDialog(QWidget *parent = nullptr);
     ~SetFilterDialog();
 
+    bool isCondition(bool checked, QString name);
+
 private:
     Ui::SetFilterDialog *ui;
 };

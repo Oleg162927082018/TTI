@@ -12,7 +12,6 @@
 #include <GUI/TestCase/Open/View/open-testcase-dialog.h>
 #include <GUI/Run/PlanDispatcher/View/plan-dispatcher-dialog.h>
 #include <HelpManager/helpmanager.h>
-#include <GUI/Search/View/set-filter-dialog.h>
 #include <GUI/RunHeader/RunHeadersDialog/View/run-headers-dialog.h>
 #include <GUI/Tag/Dispatcher/View/tag-dispatcher-dialog.h>
 
@@ -456,7 +455,38 @@ void MainWindow::on_actionIndexHelp_triggered()
 
 void MainWindow::on_actionSet_Filter_triggered()
 {
-    SetFilterDialog dlg(this);
-    dlg.exec();
+    if(filterDlg == nullptr) { filterDlg = new SetFilterDialog(this); }
+    filterDlg->exec();
+
+    QModelIndex currIndex = ui->testTableView->currentIndex();
+
+    int r = currIndex.row();
+    MainWindowTableItem *currItem = testTableAdapter.getRowData(r);
+
+    int currCol = currIndex.column();
+    if(currCol < 0) { currCol = 0; }
+
+    testTableAdapter.beginResetModel();
+
+    foreach (MainWindowTreeFolder *tc, MainWindowModel::tree) {
+        MainWindowModel::ClearVisibleTableItems(tc);
+        foreach (MainWindowTableItem *item, tc->fullTableItems) {
+            MainWindowModel::SetVisibleTableItem(tc, item,
+                filterDlg->isCondition(item->checked, item->name));
+        }
+    }
+
+    testTableAdapter.endResetModel();
+
+    QModelIndex newIndex;
+    int newRow = testTableAdapter.rowByData(currItem);
+    if((newRow < 0) && (testTableAdapter.rowCount(QModelIndex()) > 0)) { newRow = 0; }
+
+    if( newRow >= 0 ) {
+        newIndex = testTableAdapter.index(newRow, currCol);
+        ui->testTableView->setCurrentIndex(newIndex);
+    } else {
+        emit this->on_testTableViewSelectionChanged(QItemSelection(), QItemSelection());
+    }
 }
 
