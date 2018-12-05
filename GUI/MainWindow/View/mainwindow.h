@@ -12,9 +12,15 @@
 #include <QList>
 #include <QCheckBox>
 #include <QPlainTextEdit>
+#include <QLabel>
+#include <QComboBox>
 
 #include "GUI/MainWindow/Controller/test-tree-adapter.h"
 #include "GUI/MainWindow/Controller/test-table-adapter.h"
+
+#include "GUI/Run/PlanDispatcher-New/View/plan-new-dialog.h"
+
+#include <GUI/Search/View/set-filter-dialog.h>
 
 namespace Ui {
 class MainWindow;
@@ -25,72 +31,69 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    PlanNewDialog *createPlanNewDialog(QWidget *parent = nullptr);
+
 private slots:
-    void on_actionExit_triggered();
-
-    void on_actionNewTestCase_triggered();
-
-    void on_actionOpenTestCase_triggered();
-
-    void on_actionRun_dispatcher_triggered();
-
     void on_testTreeViewSelectionChanged(const QItemSelection& newSelection, const QItemSelection& oldSelection);
-
+    void on_testTreeView_customContextMenuRequested(const QPoint &pos);
     void on_testTableViewSelectionChanged(const QItemSelection& newSelection, const QItemSelection& oldSelection);
-
     void on_leftCompareComboBox_activated(int index);
-
     void on_rightCompareComboBox_activated(int index);
 
-    void on_leftTheBestBox_stateChanged(int arg1);
-
-    void on_rightTheBestBox_stateChanged(int arg1);
-
-    void on_leftPerfectBox_stateChanged(int arg1);
-
-    void on_rightPerfectBox_stateChanged(int arg1);
-
-    void on_actionLoadTestCaseResults_triggered();
-
-    void on_actionLoadFolderResults_triggered();
-
-    void on_actionLoadAllResults_triggered();
-
-    void on_actionLoadTestResult_triggered();
-
-    void on_actionLoadRunResults_triggered();
-
-    void on_actionLoadOneResult_triggered();
-
-    void on_actionShowRun_triggered();
+    void on_leftPerfectBox_clicked(bool checked);
+    void on_leftTheBestBox_clicked(bool checked);
+    void on_rightTheBestBox_clicked(bool checked);
+    void on_rightPerfectBox_clicked(bool checked);
 
     void on_testTableView_customContextMenuRequested(const QPoint &pos);
-
     void on_testTableHeaderView_customContextMenuRequested(const QPoint &pos);
 
-    void on_testTreeView_customContextMenuRequested(const QPoint &pos);
-
     void on_tagBox_anchorClicked(const QUrl &arg1);
-
-    void on_menuTagCollections_triggered();
-
-    void on_menyAttachTag_triggered();
-
     void on_attachTagBtn_clicked();
 
-    void on_menuContentsHelp_triggered();
+    //Menu actions
 
-    void on_menuIndexHelp_triggered();
+    //File
+        //Test Case
+            void on_actionNewTestCase_triggered();
+            void on_actionOpenTestCase_triggered();
+            //Load results for
+                void on_actionLoadAllResults_triggered();
+                void on_actionLoadTestCaseResults_triggered();
+                void on_actionLoadFolderResults_triggered();
+                void on_actionLoadRunResults_triggered();
+                void on_actionLoadTestResult_triggered();
+                void on_actionLoadOneResult_triggered();
+            //Run results
+                void on_actionShow_RunHeader_triggered();
+
+    void on_actionExit_triggered();
+
+
+    //Search
+    void on_actionSet_Filter_triggered();
+
+    //Run
+    void on_actionRun_dispatcher_triggered();
+
+    //Tags
+    void on_actionTagCollections_triggered();
+    void on_actionAttachTag_triggered();
+
+    //Tools
+
+    //View
+
+
+    //Help
+    void on_actionContentsHelp_triggered();
+    void on_actionIndexHelp_triggered();
 
 private:
     Ui::MainWindow *ui;
-
-    bool isMainWindowUpdating = false;
-    void BeginMainWindowUpdate();
-    void EndMainWindowUpdate();
 
     QModelIndex bakupTreeIndex;
     void saveTreeState();
@@ -98,25 +101,27 @@ private:
     void loadTreeState();
     void loadExpandedState(QModelIndex &index);
 
-    void FreeTreeModel(TestCaseFolder *folder);
-
     TestTreeAdapter testTreeAdapter;
     TestTableAdapter testTableAdapter;
 
     QMap<QString, IResultCompareWidget *> compareWidgets;
 
-    void UpdateTestStatus(int runNum, QString newStatus, bool checked);
-
     QMenu tableContextMenu;
     QMenu tableHeadContextMenu;
     QMenu treeContextMenu;
 
-    void UpdateTagListForCurrentTest();
+    enum SideOfCompareWidget {LeftSideOfCompareWidget, RightSideOfCompareWidget};
+
+    void updateComparePanel(int index, QComboBox *compareComboBox, QPlainTextEdit *logBox, QLabel *infoLabel,
+                            QCheckBox *perfectBox, QCheckBox *theBestBox, SideOfCompareWidget sideOfCompareWidget);
 
     void AttachTag();
-    void FillLeftDetailPanel(TestCaseItem *testItem);
-    void FillRightDetailPanel(TestCaseItem *testItem);
-    TestCaseItem *GetCurrentTestItem();
+
+    void UpdateTestStatus(int runNum, QString newStatus, bool checked);
+
+    QMap<int, MainWindowTableHeader *> *compareComboBox_dataSource = nullptr;
+
+    SetFilterDialog *filterDlg = nullptr;
 };
 
 #endif // MAINWINDOW_H

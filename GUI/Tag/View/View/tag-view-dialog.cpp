@@ -8,6 +8,11 @@ TagViewDialog::TagViewDialog(QWidget *parent) :
     ui(new Ui::TagViewDialog)
 {
     ui->setupUi(this);
+
+    Qt::WindowFlags flags = windowFlags();
+    flags |= Qt::WindowMaximizeButtonHint;
+    flags &= ~Qt::WindowContextHelpButtonHint;
+    setWindowFlags(flags);
 }
 
 TagViewDialog::~TagViewDialog()
@@ -17,18 +22,18 @@ TagViewDialog::~TagViewDialog()
 
 void TagViewDialog::setTag(QString tagPath)
 {
-    QDomDocument config;
+    QString config;
 
     ui->tagNameBox->setText(tagPath);
     TagItem *tagItem = TagManager::FindTagByPath(tagPath);
-    if(tagItem == NULL) { return; }
+    if(tagItem == nullptr) { return; }
 
     ITagAdapter *tagAdapter = TagManager::GetTagAdapter(tagItem->tag->type);
-    if(tagAdapter == NULL) { return; }
+    if(tagAdapter == nullptr) { return; }
     ITagWidget *viewTagWidget = tagAdapter->GetTagViewWidget(this);
-    if(viewTagWidget == NULL) { return; }
+    if(viewTagWidget == nullptr) { return; }
 
-    viewTagWidget->SetData(&config, &(tagItem->tag->data));
+    viewTagWidget->SetData(config, tagItem->tag->data);
     ui->verticalLayout->insertWidget(1,viewTagWidget);
 }
 

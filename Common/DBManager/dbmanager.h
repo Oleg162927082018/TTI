@@ -4,7 +4,6 @@
 #include "../itestcasetemplate.h"
 
 #include "test-case.h"
-#include "test-case-cache.h"
 #include "test-status.h"
 #include "run-description.h"
 #include "test-result.h"
@@ -23,17 +22,17 @@ public:
     static void SaveTestCase(QString testCaseFullFileName, TestCase *tc);
     static TestCase *GetTestCase(QString testCaseFullFileName);
 
-    // Test-case cache
-    static void SaveTestCaseCache(QString testCaseFullFileName, QMap<QString, QDomDocument *> *testList);
-    static TestCaseFolder *GetTestCaseCache(QString testCaseFullFileName);
-    static TestCaseFolder *GetCacheFolder(QString statusFullFolderName, QString relativeSubFolderName);
-
     // Test status
-    static void SaveTestStatus(QString testCaseFullFileName, QString testRelativeName, TestStatus *ts);
-    static TestStatus *GetTestStatus(QString testCaseFullFileName, QString testRelativeName);
+    //Create folders and status files. testList must contain pairs path to status file and content of <data> section
+    //which needed for run test. Example: <"srcFolder/subFolder/subSubFolder/test-001.script", "<path src="0">test-001.script</path>">
+    static void CreateTestCaseInfrastructure(QString testCaseFullFileName, QMap<QString, QString> *testList);
+    static QStringList GetTestCaseFolders(QString testCaseFullFileName, QString relativeOwnerFolderName);
+    static QList<TestStatus *> GetTestCaseFolderItems(QString testCaseFullFileName, QString relativeOwnerFolderName);
+    static TestStatus *GetTestStatus(QString testCaseFullFileName, QString statusRelativeFileName);
+    static void SaveTestStatus(QString testCaseFullFileName, TestStatus *ts);
 
     // Test-plan
-    static void SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *> *cache, bool isRunOnce, bool isUpdateLastResult);
+    static void SaveTestingPlan(QString planFullFileName,QList<TestCase*> *testCases, QList<QPair<TestCase *, TestStatus *>> *tests, bool isRunOnce, bool isUpdateLastResult);
     static QDomDocument *GetTestingPlan(QString planFullFileName);
 
     // Run description

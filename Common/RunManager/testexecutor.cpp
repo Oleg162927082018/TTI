@@ -9,14 +9,14 @@
 
 #include <windows.h>
 
-TestExecutor::TestExecutor(TestInfo *info) : QObject(0)
+TestExecutor::TestExecutor(TestInfo *info) : QObject(nullptr)
 {
     this->info = info;
 }
 
 void TestExecutor::doKill()
 {
-    if(proc != NULL) { proc->kill(); }
+    if(proc != nullptr) { proc->kill(); }
 }
 
 void TestExecutor::run()
@@ -24,14 +24,14 @@ void TestExecutor::run()
     /*SHELLEXECUTEINFO shExecInfo;
     shExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 
-    shExecInfo.fMask = NULL;
-    shExecInfo.hwnd = NULL;
+    shExecInfo.fMask = nullptr;
+    shExecInfo.hwnd = nullptr;
     shExecInfo.lpVerb = L"runas";
-    shExecInfo.lpFile = L"D:/Home/Total Test Integrator/lib/MLFW-PhantomJS/test-ready/phantomjs.exe";
-    shExecInfo.lpParameters = L"\"D:/Home/Total Test Integrator/lib/MLFW-PhantomJS/test-ready/scripts/OpenStartPage/OpenStartPage.js\" http://ya.ru \"D:/temp\"";
-    shExecInfo.lpDirectory = NULL;
+    shExecInfo.lpFile = L"D:/Home/Total Test Integrator/lib/PhantomJS/test-ready/phantomjs.exe";
+    shExecInfo.lpParameters = L"\"D:/Home/Total Test Integrator/lib/PhantomJS/test-ready/scripts/OpenStartPage/OpenStartPage.js\" http://ya.ru \"D:/temp\"";
+    shExecInfo.lpDirectory = nullptr;
     shExecInfo.nShow = SW_HIDE;
-    shExecInfo.hInstApp = NULL;
+    shExecInfo.hInstApp = nullptr;
 
     ShellExecuteEx(&shExecInfo);*/
 

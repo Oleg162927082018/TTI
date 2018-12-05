@@ -71,7 +71,7 @@ QModelIndex TagCollectionTreeAdapter::parent(const QModelIndex &child) const
     if (!child.isValid()) { return QModelIndex(); }
 
     TagItem *tagItem = static_cast<TagItem *>(child.internalPointer());
-    if (tagItem->parent != 0)
+    if (tagItem->parent != nullptr)
     {
         return createIndex(findRow(tagItem->parent), 0, tagItem->parent);
     }
@@ -83,7 +83,7 @@ QModelIndex TagCollectionTreeAdapter::parent(const QModelIndex &child) const
 
 int TagCollectionTreeAdapter::findRow(TagItem *tagItem) const
 {
-    if(tagItem->parent == NULL)
+    if(tagItem->parent == nullptr)
     {
         return TagManager::GetTagCollectionInd(tagItem->name);
     }

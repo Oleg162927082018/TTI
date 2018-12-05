@@ -3,6 +3,7 @@
 
 #include <QtXml/QDomDocument>
 #include <QStringList>
+#include <QMap>
 
 struct BenchmarkInfo
 {
@@ -12,7 +13,9 @@ struct BenchmarkInfo
 
 struct TestStatus
 {
-    QDomDocument data;
+    QString relativeFileName; //Name from folder STATUS
+
+    QString data; //Params used for run test. Send to dll for getting run command.
     QMap<int, BenchmarkInfo> benchmarks;
     QStringList tags;
 };

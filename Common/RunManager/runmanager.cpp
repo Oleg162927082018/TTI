@@ -7,7 +7,7 @@
 #include <QDir>
 #include <QDateTime>
 
-RunManager *RunManager::Handle = NULL;
+RunManager *RunManager::Handle = nullptr;
 
 RunManager::RunManager(QObject *parent) : QObject(parent)
 {
@@ -88,7 +88,7 @@ void RunManager::Start(int ind)
         else { Handle->processingPlan = ind; }
 
         QThreadPool::globalInstance()->setMaxThreadCount(1);
-        Handle->onTestFinished(NULL);
+        Handle->onTestFinished(nullptr);
     }
 }
 
@@ -122,7 +122,7 @@ void RunManager::Pause()
 void RunManager::onTestFinished(TestInfo *info)
 {
     //Save result of finished tests and delete Test Info
-    if(info != NULL)
+    if(info != nullptr)
     {
         endTest(info, planQueue.at(processingPlan));
         emit testFinished(processingPlan);
@@ -207,7 +207,7 @@ testCaseVerifying:
 void RunManager::beginWatingPlan(PlanQueueItem *plan)
 {
     //Imposible but need control
-    if(plan == NULL) { return; }
+    if(plan == nullptr) { return; }
 
     plan->planXml = DBManager::GetTestingPlan(plan->fullFileName);
 
@@ -246,7 +246,7 @@ void RunManager::beginWatingPlan(PlanQueueItem *plan)
 void RunManager::beginPausePlan(PlanQueueItem *plan)
 {
     //Imposible but need control
-    if(plan == NULL) { return; }
+    if(plan == nullptr) { return; }
 
     int newLogLine = plan->log.length();
     plan->log.append("Resumed...");
@@ -257,7 +257,7 @@ void RunManager::beginPausePlan(PlanQueueItem *plan)
 
 void RunManager::endPlan(PlanQueueItem *plan)
 {
-    if(plan->planXml != NULL) { delete plan->planXml; }
+    if(plan->planXml != nullptr) { delete plan->planXml; }
     if(plan->isDeleteAfterRun) { QFile(plan->fullFileName).remove(); }
 
     int newLogLine = plan->log.length();
@@ -270,7 +270,7 @@ void RunManager::endPlan(PlanQueueItem *plan)
 void RunManager::beginNextTestCase(PlanQueueItem *plan)
 {
     //Imposible but need control
-    if((plan == NULL) || (plan->processedTestCase.isNull())) { return; }
+    if((plan == nullptr) || (plan->processedTestCase.isNull())) { return; }
 
     plan->processedTestCase = plan->processedTestCase.nextSiblingElement("test-case");
 
@@ -296,7 +296,7 @@ void RunManager::beginNextTestCase(PlanQueueItem *plan)
 void RunManager::cacheTestCaseData(PlanQueueItem *plan)
 {
     //Imposible but need control
-    if((plan == NULL) || (plan->processedTestCase.isNull())) { return; }
+    if((plan == nullptr) || (plan->processedTestCase.isNull())) { return; }
 
     plan->processedTestCaseID = plan->processedTestCase.firstChildElement("ID").text();
     plan->processedTestCaseFullFileName = plan->processedTestCase.firstChildElement("path").text();
@@ -316,7 +316,7 @@ void RunManager::cacheTestCaseData(PlanQueueItem *plan)
     plan->processedTestCaseCompressionLevel = plan->processedTestCase.firstChildElement("compression").text().toInt();
     plan->processedTestCaseIsSaveOutPut = plan->processedTestCase.firstChildElement("is-save-output").text().compare("true", Qt::CaseInsensitive) == 0;
 
-    plan->processedTestCaseExtraParams = plan->processedTestCase.firstChildElement("extra");
+    plan->processedTestCaseExtraParams = plan->processedTestCase.firstChildElement("extra").firstChild().toCDATASection().data();
 
     plan->processedTestCaseStart = QDateTime::currentDateTime();
     plan->processedTestCaseMinTreads = plan->processedTestCaseMaxThreads;
@@ -336,7 +336,7 @@ void RunManager::cacheTestCaseData(PlanQueueItem *plan)
 void RunManager::endTestCase(PlanQueueItem *plan)
 {
     RunDescription *rd = DBManager::GetRunDescription(plan->processedTestCaseFullFileName, plan->processedTestCaseRunName);
-    if(rd != NULL)
+    if(rd != nullptr)
     {
         rd->WorkingTimeMs = QDateTime::currentDateTime().toMSecsSinceEpoch() - plan->processedTestCaseStart.toMSecsSinceEpoch();
         rd->MinUsedThreads = plan->processedTestCaseMinTreads;
@@ -363,7 +363,7 @@ void RunManager::endTestCase(PlanQueueItem *plan)
 void RunManager::beginTest(PlanQueueItem *plan)
 {
     //Imposible but need control
-    if((plan == NULL) || (plan->processedTest.isNull())) { return; }
+    if((plan == nullptr) || (plan->processedTest.isNull())) { return; }
 
     //Prepare test info data
     TestInfo *tstInf = new TestInfo();
@@ -376,27 +376,14 @@ void RunManager::beginTest(PlanQueueItem *plan)
     tstInf->isSaveOutput = plan->processedTestCaseIsSaveOutPut;
     tstInf->comparator = DLLManager::GetTestCaseComparator(plan->processedTestCaseID);
 
-    //Get command line from extra params and test data
-    QDomDocument extraParams;
-    QDomNode extraParamNode = plan->processedTestCaseExtraParams.firstChild();
-    while(!extraParamNode.isNull())
-    {
-        extraParams.appendChild(extraParams.importNode(extraParamNode, true));
-        extraParamNode = extraParamNode.nextSibling();
-    }
-
-    QDomDocument testData;
-    QDomNode testDataNode = plan->processedTest.firstChild();
-    while(!testDataNode.isNull())
-    {
-        testData.appendChild(testData.importNode(testDataNode, true));
-        testDataNode = testDataNode.nextSibling();
-    }
+    QString testData = plan->processedTest.firstChild().toCDATASection().data();
 
     DLLManager::GetTestCaseRunCommand(plan->processedTestCaseID,
                               plan->processedTestCaseFullFileName,
-                              extraParams, testData, tstInf->outputFullFolderName,
-                              tstInf->exeCommand, tstInf->argumentList, tstInf->workingFullFolderName);
+                              plan->processedTestCaseExtraParams,
+                              testData, tstInf->outputFullFolderName,
+                              tstInf->exeCommand, tstInf->argumentList,
+                              tstInf->workingFullFolderName);
 
 
     //Prepare benchmark, previous and other results output folder names
@@ -407,10 +394,10 @@ void RunManager::beginTest(PlanQueueItem *plan)
         //if benchmark recalculated need remove it
         if(ts->benchmarks.remove(plan->processedTestCaseRunName.toInt()) >0 )
         {
-            DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, tstInf->testName, ts);
+            DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, ts);
         }
 
-        if((ts != NULL) && (ts->benchmarks.keys().count() > 0))
+        if((ts != nullptr) && (ts->benchmarks.keys().count() > 0))
         {
             int lastBenchmarkRunNum = ts->benchmarks.keys().last();
             tstInf->testResult.benchmarkRunMark = DBManager::GetRunName(lastBenchmarkRunNum);
@@ -421,7 +408,7 @@ void RunManager::beginTest(PlanQueueItem *plan)
                                             tstInf->testName, tstInf->testResult.benchmarkOutMark);
         }
 
-        if(ts != NULL) { delete ts; }
+        if(ts != nullptr) { delete ts; }
     }
 
 
@@ -430,7 +417,7 @@ void RunManager::beginTest(PlanQueueItem *plan)
         TestResult *tr =
                 DBManager::GetTestResult(plan->processedTestCaseFullFileName, tstInf->testName,
                                                   DBManager::GetRunName(plan->processedTestCaseRunName.toInt() - 1));
-        if(tr != NULL)
+        if(tr != nullptr)
         {
             tstInf->previousOutputFullFolderName =
                     DBManager::GetOutFolder(plan->processedTestCaseFullFileName, tstInf->testName, tr->outMark);
@@ -496,10 +483,10 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
         benchmarkInfo.outMark = testInfo->testResult.outMark;
 
         TestStatus *ts = DBManager::GetTestStatus(plan->processedTestCaseFullFileName, testInfo->testName);
-        if(ts != NULL)
+        if(ts != nullptr)
         {
             ts->benchmarks.insert(runNum, benchmarkInfo);
-            DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, testInfo->testName, ts);
+            DBManager::SaveTestStatus(plan->processedTestCaseFullFileName, ts);
             delete ts;
         }
     }

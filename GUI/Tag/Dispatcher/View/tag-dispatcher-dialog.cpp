@@ -62,7 +62,7 @@ TagDispatcherDialog::TagDispatcherDialog(int action, QWidget *parent) :
         ITagAdapter *adapter = TagManager::GetTagAdapter(key);
         ITagWidget *tagWidget = adapter->GetTagViewWidget(this);
         tagDisplayWidgetBuffer.insert(key, tagWidget);
-        if(tagWidget != NULL)
+        if(tagWidget != nullptr)
         {
             ui->tagItemWidgetsStack->addWidget(tagWidget);
         }
@@ -93,24 +93,24 @@ void TagDispatcherDialog::on_tagTreeViewSelectionChanged(const QItemSelection &n
             QModelIndex newSelectionFirstIndex = newSelection.at(0).indexes().at(0);
             TagItem *item = static_cast<TagItem*>(newSelectionFirstIndex.internalPointer());
 
-            QDomDocument config;
+            QString config;
 
-            if(item->tag != NULL)
+            if(item->tag != nullptr)
             {
                 QWidget *widget = tagDisplayWidgetBuffer.value(item->tag->type);
-                if(widget == NULL)
+                if(widget == nullptr)
                 {
                     widget = tagDisplayWidgetBuffer.value("unknown");
                 }
                 else
                 {
                     ITagWidget *tagWidget = static_cast<ITagWidget *>(widget);
-                    tagWidget->SetData(&config, &(item->tag->data));
+                    tagWidget->SetData(config, item->tag->data);
                 }
 
                 ui->tagItemWidgetsStack->setCurrentWidget(widget);
             }
-            else if(item->folder != NULL)
+            else if(item->folder != nullptr)
             {
                 TagViewFolderWidget *widget = static_cast<TagViewFolderWidget *>(tagDisplayWidgetBuffer.value("folder"));
                 widget->setData(item->folder->description);
@@ -234,7 +234,7 @@ void TagDispatcherDialog::on_newFolderBtn_clicked()
     QModelIndex index = ui->tagTreeView->currentIndex();
     TagItem *tagItem = static_cast<TagItem*>(index.internalPointer());
 
-    if(tagItem->tag == NULL)
+    if(tagItem->tag == nullptr)
     {
         bool ok;
         QString folderName = QInputDialog::getText(this, tr("New folder"), tr("Folder name:"), QLineEdit::Normal, "", &ok);
@@ -266,14 +266,14 @@ QString TagDispatcherDialog::removeTagSubItems(TagItem *tagItem)
         removeTagSubItems(tagItem->subItems.at(i));
     }
 
-    if(tagItem->tag != NULL)
+    if(tagItem->tag != nullptr)
     {
 
         TagItem *parent = tagItem->parent;
         parent->subItems.removeOne(tagItem);
 
         TagItem *tagCollection = parent;
-        while(tagCollection->parent != NULL) { tagCollection = tagCollection->parent; }
+        while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
         TagManager::SaveTagCollection(tagCollection);
 
         delete tagItem->tag;
@@ -282,13 +282,13 @@ QString TagDispatcherDialog::removeTagSubItems(TagItem *tagItem)
         return parent->path;
     }
 
-    if(tagItem->folder != NULL)
+    if(tagItem->folder != nullptr)
     {
         TagItem *parent = tagItem->parent;
         parent->subItems.removeOne(tagItem);
 
         TagItem *tagCollection = parent;
-        while(tagCollection->parent != NULL) { tagCollection = tagCollection->parent; }
+        while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
         TagManager::SaveTagCollection(tagCollection);
 
         delete tagItem->folder;
@@ -297,7 +297,7 @@ QString TagDispatcherDialog::removeTagSubItems(TagItem *tagItem)
         return parent->path;
     }
 
-    if(tagItem->collection != NULL)
+    if(tagItem->collection != nullptr)
     {
         TagManager::DeleteTagCollection(tagItem->collection->fullFileName);
         delete tagItem->collection;
@@ -306,7 +306,7 @@ QString TagDispatcherDialog::removeTagSubItems(TagItem *tagItem)
         return "";
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void TagDispatcherDialog::on_removeBtn_clicked()
@@ -361,7 +361,7 @@ void TagDispatcherDialog::on_newTagBtn_clicked()
 {
     QModelIndex index = ui->tagTreeView->currentIndex();
     TagItem *tagItem = static_cast<TagItem*>(index.internalPointer());
-    if(tagItem->tag != NULL) { tagItem = tagItem->parent; }
+    if(tagItem->tag != nullptr) { tagItem = tagItem->parent; }
 
     saveTreeState();
     BeginDialogUpdate();
@@ -380,7 +380,7 @@ void TagDispatcherDialog::on_okBtn_clicked()
     QModelIndex index = ui->tagTreeView->currentIndex();
     selectResult = static_cast<TagItem*>(index.internalPointer());
 
-    if((selectResult != NULL) && (selectResult->tag != NULL))
+    if((selectResult != nullptr) && (selectResult->tag != nullptr))
     {
         close();
     }
@@ -398,6 +398,6 @@ void TagDispatcherDialog::on_okBtn_clicked()
 
 void TagDispatcherDialog::on_cancelBtn_clicked()
 {
-    //selectResult = NULL;
+    //selectResult = nullptr;
     close();
 }

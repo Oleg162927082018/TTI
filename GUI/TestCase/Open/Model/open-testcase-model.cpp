@@ -1,5 +1,6 @@
 #include "open-testcase-model.h"
 
+#include <Common/DBManager/dbmanager.h>
 #include <QFileInfo>
 
 OpenTestCaseModel::OpenTestCaseModel()
@@ -13,48 +14,70 @@ void OpenTestCaseModel::addTestCase(QString testCaseFileName)
     if(tcInf.exists())
     {
         //Load Test-Case
-        TestCase *tc = DBManager::GetTestCase(tcInf.filePath());
-        tc->Checked = false; //is load results immediately
-        tc->Name = tcInf.fileName();
-        tc->FullFileName = tcInf.filePath();
+        OpenTestCaseItem *tcItem = new OpenTestCaseItem();
+        tcItem->isLoadResultsImediately = false;
+        tcItem->name = tcInf.fileName();
+        tcItem->testCase = DBManager::GetTestCase(tcInf.filePath());
 
-        //Load all run descriptions
-        QVector<int> *runList = DBManager::GetRunList(tc->FullFileName);
-        for(int i = 0; i < runList->length(); i++)
+        tcItem->isDescriptionFilter = false;
+        tcItem->descriptionFilter = "";
+        tcItem->isFromDateTimeFilter = false;
+        tcItem->isToDateTimeFilter = false;
+
+        //Load run descriptions
+        QVector<int> *runIdList = DBManager::GetRunList(tcItem->testCase->fullFileName);
+        for(int i = 0; i < runIdList->length(); i++)
         {
-            int runNum = runList->at(i);
-            RunDescription *desc = DBManager::GetRunDescription(tcInf.filePath(), DBManager::GetRunName(runNum));
-            desc->Checked = false;
-            tc->RunDescriptions.insert(desc->Num, desc);
-        }
-        delete runList;
+            int runNum = runIdList->at(i);
+            OpenTestCaseRunItem *runItem = new OpenTestCaseRunItem();
 
-        testCaseList.append(tc);
+            runItem->checked = true;
+            runItem->runDescription = DBManager::GetRunDescription(tcInf.filePath(), DBManager::GetRunName(runNum));
+            runItem->name = runItem->runDescription->LocalDateTimeOfStart.toString("dd-MMM-yyyy HH:mm:ss");
+            if(tcItem->fromDateTimeFilter.isNull() || tcItem->toDateTimeFilter.isNull()) {
+                tcItem->fromDateTimeFilter = tcItem->toDateTimeFilter = runItem->runDescription->LocalDateTimeOfStart;
+            } else {
+                if(tcItem->fromDateTimeFilter > runItem->runDescription->LocalDateTimeOfStart)
+                    { tcItem->fromDateTimeFilter = runItem->runDescription->LocalDateTimeOfStart; }
+                if(tcItem->toDateTimeFilter < runItem->runDescription->LocalDateTimeOfStart)
+                    { tcItem->toDateTimeFilter = runItem->runDescription->LocalDateTimeOfStart; }
+            }
+
+            tcItem->fullRunDescriptions.insert(runItem->runDescription->Num, runItem);
+            tcItem->visibleRunDescriptions.insert(runItem->runDescription->Num, runItem);
+        }
+        delete runIdList;
+
+        if(tcItem->fromDateTimeFilter.isNull() || tcItem->toDateTimeFilter.isNull()) {
+            tcItem->fromDateTimeFilter = tcItem->toDateTimeFilter = QDateTime::fromTime_t(0);
+        }
+
+        itemList.append(tcItem);
     }
 }
 
 void OpenTestCaseModel::removeTestCase(int ind)
 {
-    TestCase *tc = testCaseList.at(ind);
-    if(currentTestCase == tc)
+    OpenTestCaseItem *tcItem = itemList.at(ind);
+    if(curItem == tcItem)
     {
-        currentTestCase = NULL;
+        curItem = nullptr;
     }
 
-    for(int i = 0; i < tc->RunDescriptions.keys().length(); i++)
+    for(int i = 0; i < tcItem->fullRunDescriptions.count(); i++)
     {
-        int key = tc->RunDescriptions.keys().at(i);
-        RunDescription *rd = tc->RunDescriptions.value(key);
-        delete rd;
+        OpenTestCaseRunItem *runItem = tcItem->fullRunDescriptions.values().at(i);
+        delete runItem->runDescription;
+        delete runItem;
     }
 
-    testCaseList.removeAt(ind);
-    delete tc;
+    itemList.removeAt(ind);
+    delete tcItem;
 }
 
 void OpenTestCaseModel::clear()
 {
-    while(testCaseList.length() > 0)
+    while(itemList.length() > 0)
     {
         removeTestCase(0);
     }
@@ -62,9 +85,9 @@ void OpenTestCaseModel::clear()
 
 bool OpenTestCaseModel::isTestCaseContained(QString testCaseFileName)
 {
-    for(int i = 0; i < testCaseList.length(); i++)
+    for(int i = 0; i < itemList.length(); i++)
     {
-        if(testCaseList.at(i)->FullFileName.compare(testCaseFileName, Qt::CaseInsensitive) == 0)
+        if(itemList.at(i)->testCase->fullFileName.compare(testCaseFileName, Qt::CaseInsensitive) == 0)
         {
             return true;
         }

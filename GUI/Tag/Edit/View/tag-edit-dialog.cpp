@@ -6,6 +6,11 @@ TagEditDialog::TagEditDialog(QWidget *parent) :
     ui(new Ui::TagEditDialog)
 {
     ui->setupUi(this);
+
+    Qt::WindowFlags flags = windowFlags();
+    flags |= Qt::WindowMaximizeButtonHint;
+    flags &= ~Qt::WindowContextHelpButtonHint;
+    setWindowFlags(flags);
 }
 
 TagEditDialog::~TagEditDialog()

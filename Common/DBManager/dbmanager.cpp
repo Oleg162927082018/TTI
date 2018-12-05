@@ -46,13 +46,13 @@ void DBManager::SaveTestCase(QString testCaseFullFileName, TestCase *tc)
 
     //Config list
     QDomElement configListNode = doc.createElement("config-list");
-    configListNode.setAttribute("current", tc->CurrentConfigName);
+    configListNode.setAttribute("current", tc->currConfigName);
     rootNode.appendChild(configListNode);
 
-    for(int i = 0; i < tc->ConfigList.count(); i++)
+    for(int i = 0; i < tc->configList.count(); i++)
     {
-        QString name = tc->ConfigList.keys().at(i);
-        TestCaseConfig tc_cfg = tc->ConfigList.value(name);
+        QString name = tc->configList.keys().at(i);
+        TestCaseConfig tc_cfg = tc->configList.value(name);
 
         QDomElement configNode = doc.createElement("config");
         configNode.setAttribute("name", name);
@@ -61,21 +61,21 @@ void DBManager::SaveTestCase(QString testCaseFullFileName, TestCase *tc)
         QDomElement watingElement = doc.createElement("waiting-sec");
         configNode.appendChild(watingElement);
 
-        QDomText watingValue = doc.createTextNode(QString::number(tc_cfg.WaitingTime));
+        QDomText watingValue = doc.createTextNode(QString::number(tc_cfg.waitingTime));
         watingElement.appendChild(watingValue);
 
         //Max Threads
         QDomElement threadsElement = doc.createElement("max-threads");
         configNode.appendChild(threadsElement);
 
-        QDomText threadsValue = doc.createTextNode(QString::number(tc_cfg.MaxThreads));
+        QDomText threadsValue = doc.createTextNode(QString::number(tc_cfg.maxThreads));
         threadsElement.appendChild(threadsValue);
 
         //Compression Level
         QDomElement compressionElement = doc.createElement("compression");
         configNode.appendChild(compressionElement);
 
-        QDomText compressionValue = doc.createTextNode(QString::number(tc_cfg.CompressionLevel));
+        QDomText compressionValue = doc.createTextNode(QString::number(tc_cfg.compressionLevel));
         compressionElement.appendChild(compressionValue);
 
         //Console output
@@ -94,10 +94,12 @@ void DBManager::SaveTestCase(QString testCaseFullFileName, TestCase *tc)
         QDomCDATASection descriptionValue = doc.createCDATASection(tc_cfg.description);
         descriptionElement.appendChild(descriptionValue);
 
-        //Extra params
-        QDomElement extraNode = doc.createElement("extra");
-        extraNode.appendChild(tc_cfg.ExtraParams);
-        configNode.appendChild(extraNode);
+        //Extra parameters
+        QDomElement extraParametersElement = doc.createElement("extra");
+        configNode.appendChild(extraParametersElement);
+
+        QDomCDATASection extraParametersValue = doc.createCDATASection(tc_cfg.extraParams);
+        extraParametersElement.appendChild(extraParametersValue);
 
         configListNode.appendChild(configNode);
     }
@@ -112,7 +114,7 @@ void DBManager::SaveTestCase(QString testCaseFullFileName, TestCase *tc)
     }
 }
 
-void DBManager::SaveTestCaseCache(QString testCaseFullFileName, QMap<QString, QDomDocument *> *testList)
+void DBManager::CreateTestCaseInfrastructure(QString testCaseFullFileName, QMap<QString, QString> *testList)
 {
     QString baseFolderName = GetStatusFullFileName(testCaseFullFileName, "", "");
 
@@ -126,8 +128,9 @@ void DBManager::SaveTestCaseCache(QString testCaseFullFileName, QMap<QString, QD
 
         //Create test status
         TestStatus ts;
-        ts.data = *testList->value(relativeTestName);
-        SaveTestStatus(testCaseFullFileName, relativeTestName, &ts );
+        ts.data = testList->value(relativeTestName);
+        ts.relativeFileName = relativeTestName;
+        SaveTestStatus(testCaseFullFileName, &ts );
     }
 }
 
@@ -142,35 +145,29 @@ TestCase *DBManager::GetTestCase(QString testCaseFullFileName)
         if(file.open(QIODevice::ReadOnly)) {
             if(doc.setContent(&file)) {
                 TestCase *tc = new TestCase();
+                tc->fullFileName = tcFileInfo.filePath();
 
                 QDomElement tcRootElement = doc.firstChildElement("test-case");
-                if(tcRootElement.isNull()) { return NULL; }
+                if(tcRootElement.isNull()) { return nullptr; }
 
                 tc->ID = tcRootElement.firstChildElement("ID").text();
 
                 QDomElement tcConfigListElement = tcRootElement.firstChildElement("config-list");
-                tc->CurrentConfigName = tcConfigListElement.attribute("current");
+                tc->currConfigName = tcConfigListElement.attribute("current");
 
                 QDomElement tcConfigElement = tcConfigListElement.firstChildElement("config");
                 while(!tcConfigElement.isNull())
                 {
                     TestCaseConfig cfg;
 
-                    cfg.WaitingTime = tcConfigElement.firstChildElement("waiting-sec").text().toInt();
-                    cfg.MaxThreads = tcConfigElement.firstChildElement("max-threads").text().toInt();
-                    cfg.CompressionLevel = tcConfigElement.firstChildElement("compression").text().toInt();
+                    cfg.waitingTime = tcConfigElement.firstChildElement("waiting-sec").text().toInt();
+                    cfg.maxThreads = tcConfigElement.firstChildElement("max-threads").text().toInt();
+                    cfg.compressionLevel = tcConfigElement.firstChildElement("compression").text().toInt();
                     cfg.isSaveOutput = (tcConfigElement.firstChildElement("is-save-output").text().compare("true", Qt::CaseInsensitive) == 0)?true:false;
                     cfg.description = tcConfigElement.firstChildElement("description").firstChild().toCDATASection().data();
+                    cfg.extraParams = tcConfigElement.firstChildElement("extra").firstChild().toCDATASection().data();
 
-                    QDomNode extraParamNode = tcConfigElement.firstChildElement("extra").firstChild();
-                    while(!extraParamNode.isNull())
-                    {
-                        QDomNode newNode = cfg.ExtraParams.importNode(extraParamNode, true);
-                        cfg.ExtraParams.appendChild(newNode);
-                        extraParamNode = extraParamNode.nextSibling();
-                    }
-
-                    tc->ConfigList.insert(tcConfigElement.attribute("name"), cfg);
+                    tc->configList.insert(tcConfigElement.attribute("name"), cfg);
                     tcConfigElement = tcConfigElement.nextSiblingElement("config");
                 }
 
@@ -180,7 +177,7 @@ TestCase *DBManager::GetTestCase(QString testCaseFullFileName)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void DBManager::SaveRunDescription(QString testCaseFullFileName, QString runName, RunDescription *rd)
@@ -288,7 +285,7 @@ RunDescription *DBManager::GetRunDescription(QString testCaseFullFileName, QStri
                 d->Num = runName.toInt();
 
                 QDomElement rootElement = doc.firstChildElement("description");
-                if(rootElement.isNull()) { return NULL; }
+                if(rootElement.isNull()) { return nullptr; }
 
                 QDomElement startElement = rootElement.firstChildElement("start-utc");
                 QDateTime dt = QDateTime::fromString(startElement.text(), "yyyyMMdd_HHmmss");
@@ -322,35 +319,22 @@ RunDescription *DBManager::GetRunDescription(QString testCaseFullFileName, QStri
             file.close();
         }
     }
-    return NULL;
+    return nullptr;
 }
 
-TestCaseFolder *DBManager::GetTestCaseCache(QString testCaseFullFileName)
+QStringList DBManager::GetTestCaseFolders(QString testCaseFullFileName, QString relativeOwnerFolderName)
 {
-    QDir statusFolder(GetStatusFullFileName(testCaseFullFileName, "", ""));
+    QString statusFullFolderName = GetStatusFullFileName(testCaseFullFileName, relativeOwnerFolderName, "");
+    QDir dir(statusFullFolderName);
 
-    TestCaseFolder *f = GetCacheFolder(statusFolder.absolutePath(), "");
-    return f;
+    return dir.entryList(QDir::NoDotAndDotDot | QDir::Dirs);
 }
 
-TestCaseFolder *DBManager::GetCacheFolder(QString statusFullFolderName, QString relativeSubFolderName)
+QList<TestStatus *> DBManager::GetTestCaseFolderItems(QString testCaseFullFileName, QString relativeOwnerFolderName)
 {
-    QDir dir(statusFullFolderName + relativeSubFolderName);
-
-    TestCaseFolder *resultFolder = new TestCaseFolder();
-    resultFolder->Name = dir.dirName();
-    resultFolder->ParentFolder = NULL;
-
-    QStringList folderNames = dir.entryList(QDir::NoDotAndDotDot | QDir::Dirs);
-    for(int i = 0; i < folderNames.count(); i++)
-    {
-        TestCaseFolder *subFolder = GetCacheFolder(statusFullFolderName, relativeSubFolderName + "/" + folderNames.at(i));
-        subFolder->ParentFolder = resultFolder;
-
-        resultFolder->SubFolderList.append(subFolder);
-        for(int j = 0; j < subFolder->TestList.count(); j++)
-        { resultFolder->TestList.append(subFolder->TestList.at(j)); }
-    }
+    QString statusFullFolderName = GetStatusFullFileName(testCaseFullFileName, relativeOwnerFolderName, "");
+    QDir dir(statusFullFolderName);
+    QList<TestStatus *> tcItems;
 
     QStringList nameFilter;
     nameFilter << "*.xml";
@@ -358,77 +342,12 @@ TestCaseFolder *DBManager::GetCacheFolder(QString statusFullFolderName, QString 
     for(int i = 0; i < fileInfoList.count(); i++)
     {
         QString fileName = fileInfoList.at(i).fileName();
-        TestCaseItem *test = new TestCaseItem();
-        test->RelativeFileName = relativeSubFolderName + "/" + fileName.left(fileName.lastIndexOf("."));
-        test->Name = QFileInfo(test->RelativeFileName).fileName();
-        resultFolder->TestList.append(test);
+        TestStatus *testStatus = DBManager::GetTestStatus(
+                    testCaseFullFileName, relativeOwnerFolderName + "/" + fileName.left(fileName.lastIndexOf(".")));
+        if(testStatus != nullptr) { tcItems.append(testStatus); }
     }
 
-    return resultFolder;
-}
-
-TestResult *DBManager::GetTestResult(QString testCaseFullFileName, QString relativeTestName, QString runName)
-{
-    QString testResultFullFileName = GetResultFullFileName(testCaseFullFileName, runName, relativeTestName, "xml");
-
-    QDomDocument doc;
-
-    QFileInfo fileInfo(testResultFullFileName);
-    if(fileInfo.exists())
-    {
-        QFile file(testResultFullFileName);
-        if(file.open(QIODevice::ReadOnly)) {
-            if(doc.setContent(&file)) {
-                TestResult *result = new TestResult();
-
-                QDomElement rootElement = doc.firstChildElement("result");
-                if(rootElement.isNull()) { return NULL; }
-
-                QDomElement outElement = rootElement.firstChildElement("out");
-                result->outMark = outElement.text();
-
-                QDomElement benchmarkElement = rootElement.firstChildElement("benchmark");
-                result->benchmarkOutMark = benchmarkElement.attribute("out");
-                result->benchmarkRunMark = benchmarkElement.attribute("run");
-                result->benchmarkStatus = benchmarkElement.attribute("status");
-                result->benchmarkCompareResult = benchmarkElement.text().toInt();
-
-
-                QDomElement previousElement = rootElement.firstChildElement("previous");
-                result->previousOutMark = previousElement.attribute("out");
-                result->previousRunMark = previousElement.attribute("run");
-                result->previousCompareResult = previousElement.text().toInt();
-
-                QDomElement exitElement = rootElement.firstChildElement("exit-code");
-                result->exitStatus = exitElement.attribute("status");
-                result->exitCode = exitElement.text().toInt();
-
-                QDomElement statusElement = rootElement.firstChildElement("test-status");
-                result->status = statusElement.text();
-
-                QDomElement colorElement = rootElement.firstChildElement("test-color");
-                result->color = QColor(colorElement.text());
-
-                return result;
-            }
-            file.close();
-        }
-    }
-    return NULL;
-}
-
-QByteArray DBManager::GetConsoleLog(QString testCaseFullFileName, QString relativeTestName, QString runName)
-{
-    QString logFullFileName = GetResultFullFileName(testCaseFullFileName, runName, relativeTestName, "log");
-    QByteArray logData;
-
-    QFile file(logFullFileName);
-    if(file.open(QIODevice::ReadOnly)) {
-        logData = file.readAll();
-        file.close();
-    }
-
-    return logData;
+    return tcItems;
 }
 
 TestStatus *DBManager::GetTestStatus(QString testCaseFullFileName, QString testRelativeName)
@@ -445,16 +364,12 @@ TestStatus *DBManager::GetTestStatus(QString testCaseFullFileName, QString testR
             if(doc.setContent(&file)) {
                 TestStatus *status = new TestStatus();
 
-                QDomElement rootElement = doc.firstChildElement("status");
-                if(rootElement.isNull()) { return NULL; }
+                status->relativeFileName = testRelativeName;
 
-                QDomNode dataNode = rootElement.firstChildElement("data").firstChild();
-                while(!dataNode.isNull())
-                {
-                    QDomNode node = status->data.importNode(dataNode, true);
-                    status->data.appendChild(node);
-                    dataNode = dataNode.nextSibling();
-                }
+                QDomElement rootElement = doc.firstChildElement("status");
+                if(rootElement.isNull()) { return nullptr; }
+
+                status->data = rootElement.firstChildElement("data").firstChild().toCDATASection().data();
 
                 QDomElement benchmarkElement = rootElement.firstChildElement("benchmarks").firstChildElement("benchmark");
                 while(!benchmarkElement.isNull())
@@ -481,12 +396,12 @@ TestStatus *DBManager::GetTestStatus(QString testCaseFullFileName, QString testR
             file.close();
         }
     }
-    return NULL;
+    return nullptr;
 }
 
-void DBManager::SaveTestStatus(QString testCaseFullFileName, QString testRelativeName, TestStatus *ts)
+void DBManager::SaveTestStatus(QString testCaseFullFileName, TestStatus *ts)
 {
-    QString statusFullFileName = GetStatusFullFileName(testCaseFullFileName, testRelativeName, "xml");
+    QString statusFullFileName = GetStatusFullFileName(testCaseFullFileName, ts->relativeFileName, "xml");
 
     QDomDocument doc;
 
@@ -499,9 +414,10 @@ void DBManager::SaveTestStatus(QString testCaseFullFileName, QString testRelativ
 
     //Data
     QDomElement dataElement = doc.createElement("data");
-    dataElement.appendChild(ts->data);
     rootNode.appendChild(dataElement);
 
+    QDomCDATASection dataValue = doc.createCDATASection(ts->data);
+    dataElement.appendChild(dataValue);
 
     //Benchmarks
     QDomElement benchmarksElement = doc.createElement("benchmarks");
@@ -541,7 +457,71 @@ void DBManager::SaveTestStatus(QString testCaseFullFileName, QString testRelativ
     }
 }
 
-void DBManager::SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *> *cache, bool isDeleteAfterRun, bool isUpdateLastResult)
+TestResult *DBManager::GetTestResult(QString testCaseFullFileName, QString relativeTestName, QString runName)
+{
+    QString testResultFullFileName = GetResultFullFileName(testCaseFullFileName, runName, relativeTestName, "xml");
+
+    QDomDocument doc;
+
+    QFileInfo fileInfo(testResultFullFileName);
+    if(fileInfo.exists())
+    {
+        QFile file(testResultFullFileName);
+        if(file.open(QIODevice::ReadOnly)) {
+            if(doc.setContent(&file)) {
+                TestResult *result = new TestResult();
+
+                QDomElement rootElement = doc.firstChildElement("result");
+                if(rootElement.isNull()) { return nullptr; }
+
+                QDomElement outElement = rootElement.firstChildElement("out");
+                result->outMark = outElement.text();
+
+                QDomElement benchmarkElement = rootElement.firstChildElement("benchmark");
+                result->benchmarkOutMark = benchmarkElement.attribute("out");
+                result->benchmarkRunMark = benchmarkElement.attribute("run");
+                result->benchmarkStatus = benchmarkElement.attribute("status");
+                result->benchmarkCompareResult = benchmarkElement.text().toInt();
+
+
+                QDomElement previousElement = rootElement.firstChildElement("previous");
+                result->previousOutMark = previousElement.attribute("out");
+                result->previousRunMark = previousElement.attribute("run");
+                result->previousCompareResult = previousElement.text().toInt();
+
+                QDomElement exitElement = rootElement.firstChildElement("exit-code");
+                result->exitStatus = exitElement.attribute("status");
+                result->exitCode = exitElement.text().toInt();
+
+                QDomElement statusElement = rootElement.firstChildElement("test-status");
+                result->status = statusElement.text();
+
+                QDomElement colorElement = rootElement.firstChildElement("test-color");
+                result->color = QColor(colorElement.text());
+
+                return result;
+            }
+            file.close();
+        }
+    }
+    return nullptr;
+}
+
+QByteArray DBManager::GetConsoleLog(QString testCaseFullFileName, QString relativeTestName, QString runName)
+{
+    QString logFullFileName = GetResultFullFileName(testCaseFullFileName, runName, relativeTestName, "log");
+    QByteArray logData;
+
+    QFile file(logFullFileName);
+    if(file.open(QIODevice::ReadOnly)) {
+        logData = file.readAll();
+        file.close();
+    }
+
+    return logData;
+}
+
+void DBManager::SaveTestingPlan(QString planFullFileName,QList<TestCase*> *testCases, QList<QPair<TestCase *, TestStatus *>> *tests, bool isRunOnce, bool isUpdateLastResult)
 {
     QDomDocument doc;
 
@@ -550,100 +530,91 @@ void DBManager::SaveTestingPlan(QString planFullFileName, QList<TestCaseFolder *
     doc.insertBefore(xmlNode, doc.firstChild());
 
     QDomElement rootNode = doc.createElement("run");
-    rootNode.setAttribute("delete-after-run", isDeleteAfterRun?"true":"false");
+    rootNode.setAttribute("delete-after-run", isRunOnce?"true":"false");
     rootNode.setAttribute("update-last-result", isUpdateLastResult?"true":"false");
+    rootNode.setAttribute("count", tests->count());
     doc.appendChild(rootNode);
 
-    int planCount = 0;
-    for(int i = 0; i < cache->count(); i++)
+    for(int i = 0; i < testCases->count(); i++)
     {
-        if(cache->at(i)->Checked)
+        TestCase *tc = testCases->at(i);
+
+        //Test-Case
+        QDomElement testCaseNode = doc.createElement("test-case");
+        rootNode.appendChild(testCaseNode);
+
+        //Type (ID)
+        QDomElement typeElement = doc.createElement("ID");
+        testCaseNode.appendChild(typeElement);
+
+        QDomText typeValue = doc.createTextNode(tc->ID);
+        typeElement.appendChild(typeValue);
+
+        //Test Case File Name
+        QDomElement fileNameElement = doc.createElement("path");
+        testCaseNode.appendChild(fileNameElement);
+
+        QDomText fileNameValue = doc.createTextNode(tc->fullFileName);
+        fileNameElement.appendChild(fileNameValue);
+
+        TestCaseConfig currentTestCaseConfig = tc->configList.value(tc->currConfigName);
+
+        //Wating time
+        QDomElement waitingElement = doc.createElement("waiting-sec");
+        testCaseNode.appendChild(waitingElement);
+
+        QDomText waitingValue = doc.createTextNode(QString::number(currentTestCaseConfig.waitingTime));
+        waitingElement.appendChild(waitingValue);
+
+        //Threads
+        QDomElement threadsElement = doc.createElement("max-threads");
+        testCaseNode.appendChild(threadsElement);
+
+        QDomText threadsValue = doc.createTextNode(QString::number(currentTestCaseConfig.maxThreads));
+        threadsElement.appendChild(threadsValue);
+
+        //Compression
+        QDomElement compressionElement = doc.createElement("compression");
+        testCaseNode.appendChild(compressionElement);
+
+        QDomText compressionValue = doc.createTextNode(QString::number(currentTestCaseConfig.compressionLevel));
+        compressionElement.appendChild(compressionValue);
+
+        //Is save output
+        QDomElement isSaveOutputElement = doc.createElement("is-save-output");
+        testCaseNode.appendChild(isSaveOutputElement);
+
+        QDomText isSaveOutputValue = doc.createTextNode(currentTestCaseConfig.isSaveOutput?"true":"false");
+        isSaveOutputElement.appendChild(isSaveOutputValue);
+
+        //Extra params
+        QDomElement extraParamElement = doc.createElement("extra");
+        testCaseNode.appendChild(extraParamElement);
+
+        QDomCDATASection extraParamValue = doc.createCDATASection(currentTestCaseConfig.extraParams);
+        extraParamElement.appendChild(extraParamValue);
+
+        //Test list
+        QDomElement testListNode = doc.createElement("test-list");
+        testCaseNode.appendChild(testListNode);
+
+        int tcTestsCount = 0;
+        for(int j = 0; j < tests->count(); j++)
         {
-            TestCase *tc = cache->at(i)->ownerTestCase;
+            if(tests->at(j).first == tc) {
+                TestStatus *status = tests->at(j).second;
+                QDomElement testElement = doc.createElement("test");
+                testElement.setAttribute("name", status->relativeFileName);
+                testListNode.appendChild(testElement);
 
-            //Test-Case
-            QDomElement testCaseNode = doc.createElement("test-case");
-            rootNode.appendChild(testCaseNode);
+                QDomCDATASection testDataValue = doc.createCDATASection(status->data);
+                testElement.appendChild(testDataValue);
 
-            //Type (ID)
-            QDomElement typeElement = doc.createElement("ID");
-            testCaseNode.appendChild(typeElement);
-
-            QDomText typeValue = doc.createTextNode(tc->ID);
-            typeElement.appendChild(typeValue);
-
-            //Test Case File Name
-            QDomElement fileNameElement = doc.createElement("path");
-            testCaseNode.appendChild(fileNameElement);
-
-            QDomText fileNameValue = doc.createTextNode(tc->FullFileName);
-            fileNameElement.appendChild(fileNameValue);
-
-            TestCaseConfig currentTestCaseConfig = tc->ConfigList.value(tc->CurrentConfigName);
-
-            //Wating time
-            QDomElement waitingElement = doc.createElement("waiting-sec");
-            testCaseNode.appendChild(waitingElement);
-
-            QDomText waitingValue = doc.createTextNode(QString::number(currentTestCaseConfig.WaitingTime));
-            waitingElement.appendChild(waitingValue);
-
-            //Threads
-            QDomElement threadsElement = doc.createElement("max-threads");
-            testCaseNode.appendChild(threadsElement);
-
-            QDomText threadsValue = doc.createTextNode(QString::number(currentTestCaseConfig.MaxThreads));
-            threadsElement.appendChild(threadsValue);
-
-            //Compression
-            QDomElement compressionElement = doc.createElement("compression");
-            testCaseNode.appendChild(compressionElement);
-
-            QDomText compressionValue = doc.createTextNode(QString::number(currentTestCaseConfig.CompressionLevel));
-            compressionElement.appendChild(compressionValue);
-
-            //Is save output
-            QDomElement isSaveOutputElement = doc.createElement("is-save-output");
-            testCaseNode.appendChild(isSaveOutputElement);
-
-            QDomText isSaveOutputValue = doc.createTextNode(currentTestCaseConfig.isSaveOutput?"true":"false");
-            isSaveOutputElement.appendChild(isSaveOutputValue);
-
-            //Extra params
-            QDomElement extraParamElement = doc.createElement("extra");
-            testCaseNode.appendChild(extraParamElement);
-
-            extraParamElement.appendChild(currentTestCaseConfig.ExtraParams);
-
-            //Test list
-            QDomElement testListNode = doc.createElement("test-list");
-            testCaseNode.appendChild(testListNode);
-
-            TestCaseFolder *tcFolder = cache->at(i);
-            int testCaseCount = tcFolder->TestList.count();
-            testCaseNode.setAttribute("count", testCaseCount);
-            planCount += testCaseCount;
-            for(int j = 0; j < testCaseCount; j++)
-            {
-                TestCaseItem *item = tcFolder->TestList.at(j);
-                if(item->Checked)
-                {
-                    QDomElement testElement = doc.createElement("test");
-                    testElement.setAttribute("name", item->RelativeFileName);
-                    testElement.setAttribute("status", "-");
-                    testListNode.appendChild(testElement);
-
-                    if(item->status != NULL)
-                    {
-                        testElement.appendChild(item->status->data);
-                    }
-
-                }
+                tcTestsCount++;
             }
         }
+        testCaseNode.setAttribute("count", tcTestsCount);
     }
-
-    rootNode.setAttribute("count", planCount);
 
     //Save
     QFile file(planFullFileName);
@@ -839,7 +810,7 @@ void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagItem *tagIt
     {
         TagItem *subItem = tagItem->subItems.at(i);
 
-        if(subItem->tag != NULL)
+        if(subItem->tag != nullptr)
         {
             QDomElement tagElement = folderElement.ownerDocument().createElement("tag");
             folderElement.appendChild(tagElement);
@@ -847,7 +818,8 @@ void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagItem *tagIt
             tagElement.setAttribute("type", subItem->tag->type);
             tagElement.setAttribute("name", subItem->name);
 
-            tagElement.appendChild(subItem->tag->data);
+            QDomCDATASection dataValue = folderElement.ownerDocument().createCDATASection(subItem->tag->data);
+            tagElement.appendChild(dataValue);
         }
         else //folder
         {
@@ -871,7 +843,7 @@ void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagItem *tagIt
 
 TagItem *DBManager::GetTagCollection(QString fullFileName)
 {
-    TagItem *tagCollection = NULL;
+    TagItem *tagCollection = nullptr;
 
     QFile file(fullFileName);
     if(file.open(QIODevice::ReadOnly)) {
@@ -918,10 +890,7 @@ void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagItem *tagFo
             tagItem->tag->type = tagListElement.attribute("type", "");
             tagItem->name = tagListElement.attribute("name","-");
             tagItem->path = tagFolder->path + ":" + tagItem->name;
-            for(int i = 0; i < tagListElement.childNodes().length(); i++)
-            {
-                tagItem->tag->data.appendChild(tagItem->tag->data.importNode(tagListElement.childNodes().at(i), true));
-            }
+            tagItem->tag->data = tagListElement.firstChild().toCDATASection().data();
 
             tagFolder->subItems.append(tagItem);
         }

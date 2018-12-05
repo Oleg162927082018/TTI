@@ -16,7 +16,7 @@ HelpDialog::HelpDialog(QHelpEngine *helpEng, QWidget *parent) :
     ui->setupUi(this);
 
     helpEngine = helpEng;
-    if(helpEngine!=0)
+    if(helpEngine!=nullptr)
     {
         if (helpEngine->setupData())
         {
@@ -43,7 +43,7 @@ HelpDialog::HelpDialog(QHelpEngine *helpEng, QWidget *parent) :
         else
         {
             delete helpEngine;
-            helpEngine = 0;
+            helpEngine = nullptr;
         }
     }
 }
@@ -52,10 +52,10 @@ HelpDialog::~HelpDialog()
 {
     delete ui;
 
-    if (helpEngine != 0)
+    if (helpEngine != nullptr)
     {
         delete helpEngine;
-        helpEngine = 0;
+        helpEngine = nullptr;
     }
 }
 

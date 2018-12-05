@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>TagDispatcherDialog</class>
  <widget class="QDialog" name="TagDispatcherDialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,6 +17,9 @@
    <string>Dispatcher of Tag collections</string>
   </property>
   <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
+  <property name="modal">
    <bool>true</bool>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">

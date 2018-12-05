@@ -1,9 +1,8 @@
 #ifndef OPENTESTCASEMODEL_H
 #define OPENTESTCASEMODEL_H
 
-#include "Common/DBManager/dbmanager.h"
-
 #include <QList>
+#include <GUI/TestCase/Open/Model/open-testcase-item.h>
 
 class OpenTestCaseModel
 {
@@ -15,8 +14,8 @@ public:
     void clear();
     bool isTestCaseContained(QString testCaseFileName);
 
-    QList<TestCase *> testCaseList;
-    TestCase *currentTestCase = NULL;
+    QList<OpenTestCaseItem *> itemList;
+    OpenTestCaseItem *curItem = nullptr;
 };
 
 #endif // OPENTESTCASEMODEL_H

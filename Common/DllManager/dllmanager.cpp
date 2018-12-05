@@ -29,7 +29,7 @@ void DLLManager::Init()
         if (testCaseLib.load())
         {
             GetTestCaseAdaptersFunction GetTestCaseList =
-                    (GetTestCaseAdaptersFunction)testCaseLib.resolve(GetTestCaseAdaptersFunctionName);
+                    reinterpret_cast<GetTestCaseAdaptersFunction>(testCaseLib.resolve(GetTestCaseAdaptersFunctionName));
             {
                 QList<ITestCaseAdapter *> tcList = GetTestCaseList();
                 for(int j = 0; j < tcList.size(); j++)
@@ -62,10 +62,12 @@ ITestCaseEditWidget *DLLManager::GetTestCaseEditWidget(QString id, QWidget *pare
     return DLLManager::testCaseCollection.value(id)->GetTestCaseEditWidget(parent);
 }
 
-void DLLManager::GetTestCaseRunCommand(QString id, QString testCaseFullFileName, QDomDocument extraParams, QDomDocument testParams,
-                                       QString outputFullFolderName, QString &out_cmd, QStringList &out_arg, QString &out_workDir)
+void DLLManager::GetTestCaseRunCommand(QString id, QString testCaseFullFileName,
+                                       QString extraParams, QString testParams, QString outputFullFolderName,
+                                       QString &out_cmd, QStringList &out_arg, QString &out_workDir)
 {
-    return DLLManager::testCaseCollection.value(id)->GetRunCommand(testCaseFullFileName, extraParams, testParams, outputFullFolderName, out_cmd, out_arg, out_workDir);
+    return DLLManager::testCaseCollection.value(id)->GetRunCommand(
+                testCaseFullFileName, extraParams, testParams, outputFullFolderName, out_cmd, out_arg, out_workDir);
 }
 
 ITestOutputComparator *DLLManager::GetTestCaseComparator(QString id)

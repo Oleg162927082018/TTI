@@ -2,7 +2,7 @@
 
 #include "helpmanager.h"
 
-HelpDialog *HelpManager::viewer = 0;
+HelpDialog *HelpManager::viewer = nullptr;
 
 void HelpManager::Init()
 {
@@ -13,7 +13,7 @@ void HelpManager::Init()
 
 void HelpManager::showIndex()
 {
-    if (viewer != 0)
+    if (viewer != nullptr)
     {
         viewer->showHelp(1);
     }
@@ -21,7 +21,7 @@ void HelpManager::showIndex()
 
 void HelpManager::showContents()
 {
-    if (viewer != 0)
+    if (viewer != nullptr)
     {
         viewer->showHelp(0);
     }
@@ -30,5 +30,5 @@ void HelpManager::showContents()
 void HelpManager::FreeResources()
 {
     delete viewer;
-    viewer = 0;
+    viewer = nullptr;
 }

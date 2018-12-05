@@ -31,7 +31,7 @@ struct PlanQueueItem
     QDomElement  processedTest;
 
     //Current test-case values
-    QDomElement processedTestCaseExtraParams;
+    QString processedTestCaseExtraParams;
 
     QString processedTestCaseID;
     QString processedTestCaseFullFileName;
@@ -91,7 +91,7 @@ private slots:
     void onTestFinished(TestInfo *info);
 
 private:
-    explicit RunManager(QObject *parent = 0);
+    explicit RunManager(QObject *parent = nullptr);
     ~RunManager();
 
     QList<PlanQueueItem *> planQueue;
