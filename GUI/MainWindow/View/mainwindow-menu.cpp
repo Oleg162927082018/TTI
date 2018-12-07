@@ -22,13 +22,13 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::saveTreeState()
 {
-    bakupTreeIndex = ui->testTreeView->currentIndex();
+    backupTreeIndex = ui->testTreeView->currentIndex();
 
     if(!MainWindowModel::tree.isEmpty())
     {
         for(int i = 0; i < MainWindowModel::tree.length(); i++)
         {
-            QModelIndex rootIndex = testTreeAdapter.index(i, 0);
+            QModelIndex rootIndex = MainWindowModel::testTreeAdapter.index(i, 0);
             saveExpandedState(rootIndex);
         }
     }
@@ -40,17 +40,17 @@ void MainWindow::loadTreeState()
     {
         for(int i = 0; i < MainWindowModel::tree.length(); i++)
         {
-            QModelIndex rootIndex = testTreeAdapter.index(i,0);
+            QModelIndex rootIndex = MainWindowModel::testTreeAdapter.index(i,0);
             loadExpandedState(rootIndex);
         }
 
-        if(bakupTreeIndex.isValid())
+        if(backupTreeIndex.isValid())
         {
-            ui->testTreeView->setCurrentIndex(bakupTreeIndex);
+            ui->testTreeView->setCurrentIndex(backupTreeIndex);
         }
         else
         {
-            ui->testTreeView->setCurrentIndex(testTreeAdapter.index(0,0));
+            ui->testTreeView->setCurrentIndex(MainWindowModel::testTreeAdapter.index(0,0));
         }
     }
 
@@ -63,7 +63,7 @@ void MainWindow::saveExpandedState(QModelIndex &index)
 
     for(int i = 0; i < folder->subFolders.length(); i++)
     {
-        QModelIndex subIndex = testTreeAdapter.index(i, 0, index);
+        QModelIndex subIndex = MainWindowModel::testTreeAdapter.index(i, 0, index);
         saveExpandedState(subIndex);
     }
 }
@@ -75,7 +75,7 @@ void MainWindow::loadExpandedState(QModelIndex &index)
 
     for(int i = 0; i < folder->subFolders.length(); i++)
     {
-        QModelIndex subIndex = testTreeAdapter.index(i, 0, index);
+        QModelIndex subIndex = MainWindowModel::testTreeAdapter.index(i, 0, index);
         loadExpandedState(subIndex);
     }
 }
@@ -114,11 +114,11 @@ void MainWindow::on_actionNewTestCase_triggered()
 
             //Open new test-case
             saveTreeState();
-            testTreeAdapter.beginResetModel();
+            MainWindowModel::testTreeAdapter.beginResetModel();
 
             MainWindowModel::LoadTestCase(tc);
 
-            testTreeAdapter.endResetModel();
+            MainWindowModel::testTreeAdapter.endResetModel();
             loadTreeState();
         }
     }
@@ -132,8 +132,8 @@ void MainWindow::on_actionOpenTestCase_triggered()
         QList<OpenTestCaseItem *> openTestCaseItems = openTestCaseDialog.GetOpenTestCaseItemList();
 
         saveTreeState();
-        testTreeAdapter.beginResetModel();
-        testTableAdapter.beginResetModel();
+        MainWindowModel::testTreeAdapter.beginResetModel();
+        MainWindowModel::testTableAdapter.beginResetModel();
 
         for(int i = 0; i < openTestCaseItems.count(); i++)
         {
@@ -157,8 +157,8 @@ void MainWindow::on_actionOpenTestCase_triggered()
             }
         }
 
-        testTableAdapter.endResetModel();
-        testTreeAdapter.endResetModel();
+        MainWindowModel::testTableAdapter.endResetModel();
+        MainWindowModel::testTreeAdapter.endResetModel();
         loadTreeState();
     }
 }
@@ -181,7 +181,7 @@ void MainWindow::on_actionShow_RunHeader_triggered()
 
     runDescriptionShowDialog.exec();
 
-    testTableAdapter.beginResetModel();
+    MainWindowModel::testTableAdapter.beginResetModel();
 
     QMap<int, RunHeaderItem *> *runHeaders = runDescriptionShowDialog.getRunDescriptions();
     for(int i = 0; i < runHeaders->count(); i++) {
@@ -203,7 +203,7 @@ void MainWindow::on_actionShow_RunHeader_triggered()
         }
     }
 
-    testTableAdapter.endResetModel();
+    MainWindowModel::testTableAdapter.endResetModel();
 }
 
 void MainWindow::on_actionRun_dispatcher_triggered()
@@ -212,11 +212,11 @@ void MainWindow::on_actionRun_dispatcher_triggered()
     dispatcherTestPlanDialog.exec();
 }
 
-void MainWindow::UpdateTestStatus(int runNum, QString newStatus, bool checked)
+void MainWindow::updateTestStatus(int runNum, QString newStatus, bool checked)
 {
     //Get table item
     QModelIndex tableIndex = ui->testTableView->currentIndex();
-    MainWindowTableItem *testItem = testTableAdapter.getRowData(tableIndex.row());
+    MainWindowTableItem *testItem = MainWindowModel::testTableAdapter.getRowData(tableIndex.row());
     if(testItem == nullptr) { return; }
 
     QMap<int, BenchmarkInfo> &currentTestBenchmarks = testItem->status->benchmarks;
@@ -229,11 +229,11 @@ void MainWindow::UpdateTestStatus(int runNum, QString newStatus, bool checked)
             if(currentTestBenchmarks.value(runNum).status.compare(newStatus) == 0) { return; }
 
             QModelIndex tableInd = ui->testTableView->currentIndex();
-            testTableAdapter.beginResetModel();
+            MainWindowModel::testTableAdapter.beginResetModel();
 
             currentTestBenchmarks[runNum].status = newStatus;
 
-            testTableAdapter.endResetModel();
+            MainWindowModel::testTableAdapter.endResetModel();
             ui->testTableView->setCurrentIndex(tableInd);
         }
         else
@@ -245,11 +245,11 @@ void MainWindow::UpdateTestStatus(int runNum, QString newStatus, bool checked)
             benchmarkInfo.status = newStatus;
 
             QModelIndex tableInd = ui->testTableView->currentIndex();
-            testTableAdapter.beginResetModel();
+            MainWindowModel::testTableAdapter.beginResetModel();
 
             currentTestBenchmarks.insert(runNum, benchmarkInfo);
 
-            testTableAdapter.endResetModel();
+            MainWindowModel::testTableAdapter.endResetModel();
             ui->testTableView->setCurrentIndex(tableInd);
         }
     }
@@ -259,11 +259,11 @@ void MainWindow::UpdateTestStatus(int runNum, QString newStatus, bool checked)
 
         //Need delete benchmark
         QModelIndex tableInd = ui->testTableView->currentIndex();
-        testTableAdapter.beginResetModel();
+        MainWindowModel::testTableAdapter.beginResetModel();
 
         currentTestBenchmarks.remove(runNum);
 
-        testTableAdapter.endResetModel();
+        MainWindowModel::testTableAdapter.endResetModel();
         ui->testTableView->setCurrentIndex(tableInd);
     }
 
@@ -272,18 +272,11 @@ void MainWindow::UpdateTestStatus(int runNum, QString newStatus, bool checked)
 
 void MainWindow::on_actionLoadAllResults_triggered()
 {
-    QModelIndex indexTable = ui->testTableView->currentIndex();
-
-    testTableAdapter.beginResetModel();
-
     for(int i = 0; i < MainWindowModel::tree.length(); i++)
     {
         MainWindowModel::LoadFolderResults(MainWindowModel::tree.at(i));
     }
-
-    testTableAdapter.endResetModel();
-
-    ui->testTableView->setCurrentIndex(indexTable);
+    MainWindowModel::testTableAdapter.emitDataChanged();
 }
 
 void MainWindow::on_actionLoadTestCaseResults_triggered()
@@ -291,19 +284,12 @@ void MainWindow::on_actionLoadTestCaseResults_triggered()
     QModelIndex indexTree = ui->testTreeView->currentIndex();
     MainWindowTreeFolder *tf = static_cast<MainWindowTreeFolder *>(indexTree.internalPointer());
 
-    QModelIndex indexTable = ui->testTableView->currentIndex();
-
-    testTableAdapter.beginResetModel();
-
     if(tf != nullptr)
     {
         while(tf->parentFolder != nullptr) { tf = tf->parentFolder; }
         MainWindowModel::LoadFolderResults(tf);
     }
-
-    testTableAdapter.endResetModel();
-
-    ui->testTableView->setCurrentIndex(indexTable);
+    MainWindowModel::testTableAdapter.emitDataChanged();
 }
 
 void MainWindow::on_actionLoadFolderResults_triggered()
@@ -311,18 +297,11 @@ void MainWindow::on_actionLoadFolderResults_triggered()
     QModelIndex indexTree = ui->testTreeView->currentIndex();
     MainWindowTreeFolder *tf = static_cast<MainWindowTreeFolder *>(indexTree.internalPointer());
 
-    QModelIndex indexTable = ui->testTableView->currentIndex();
-
-    testTableAdapter.beginResetModel();
-
     if(tf != nullptr)
     {
         MainWindowModel::LoadFolderResults(tf);
     }
-
-    testTableAdapter.endResetModel();
-
-    ui->testTableView->setCurrentIndex(indexTable);
+    MainWindowModel::testTableAdapter.emitDataChanged();
 }
 
 void MainWindow::on_actionLoadTestResult_triggered()
@@ -333,16 +312,11 @@ void MainWindow::on_actionLoadTestResult_triggered()
     QModelIndex indexTable = ui->testTableView->currentIndex();
     MainWindowTableItem *test = tf->visibleTableItems.at(indexTable.row());
 
-    testTableAdapter.beginResetModel();
-
     if((tf != nullptr) && (test != nullptr))
     {
         MainWindowModel::LoadTestResults(tf, test);
     }
-
-    testTableAdapter.endResetModel();
-
-    ui->testTableView->setCurrentIndex(indexTable);
+    MainWindowModel::testTableAdapter.emitDataChanged();
 }
 
 void MainWindow::on_actionLoadRunResults_triggered()
@@ -357,16 +331,11 @@ void MainWindow::on_actionLoadRunResults_triggered()
     int keyRun = tf->visibleTableHeaders->keys().at(colRun);
     MainWindowTableHeader *run = tf->visibleTableHeaders->value(keyRun);
 
-    testTableAdapter.beginResetModel();
-
     if((tf != nullptr) && (run != nullptr))
     {
         MainWindowModel::LoadRunResults(tf, run);
     }
-
-    testTableAdapter.endResetModel();
-
-    ui->testTableView->setCurrentIndex(indexTable);
+    MainWindowModel::testTableAdapter.emitDataChanged();
 }
 
 void MainWindow::on_actionLoadOneResult_triggered()
@@ -382,19 +351,14 @@ void MainWindow::on_actionLoadOneResult_triggered()
     int keyRun = tf->visibleTableHeaders->keys().at(colRun);
     MainWindowTableHeader *run = tf->visibleTableHeaders->value(keyRun);
 
-    testTableAdapter.beginResetModel();
-
     if((tf != nullptr) && (test != nullptr))
     {
         MainWindowModel::LoadOneResult(tf, test, run);
     }
-
-    testTableAdapter.endResetModel();
-
-    ui->testTableView->setCurrentIndex(indexTable);
+    MainWindowModel::testTableAdapter.emitDataChanged();
 }
 
-void MainWindow::AttachTag()
+void MainWindow::attachTag()
 {
     TagDispatcherDialog dlg(TagDispatcherDialog::ACTION_SELECT, this);
     dlg.exec();
@@ -405,17 +369,13 @@ void MainWindow::AttachTag()
 
         //Get table item
         QModelIndex tableIndex = ui->testTableView->currentIndex();
-        MainWindowTableItem *testItem = testTableAdapter.getRowData(tableIndex.row());
+        MainWindowTableItem *testItem = MainWindowModel::testTableAdapter.getRowData(tableIndex.row());
         if(testItem == nullptr) { return; }
-
-        QModelIndex tableInd = ui->testTableView->currentIndex();
-        testTableAdapter.beginResetModel();
 
         testItem->status->tags.append(tagItem->path);
         DBManager::SaveTestStatus(testItem->ownerTestCase->fullFileName, testItem->status);
 
-        testTableAdapter.endResetModel();
-        ui->testTableView->setCurrentIndex(tableInd);
+        updateTagList(testItem);
     }
 }
 
@@ -440,7 +400,7 @@ void MainWindow::on_actionTagCollections_triggered()
 
 void MainWindow::on_actionAttachTag_triggered()
 {
-    AttachTag();
+    attachTag();
 }
 
 void MainWindow::on_actionContentsHelp_triggered()
@@ -461,12 +421,12 @@ void MainWindow::on_actionSet_Filter_triggered()
     QModelIndex currIndex = ui->testTableView->currentIndex();
 
     int r = currIndex.row();
-    MainWindowTableItem *currItem = testTableAdapter.getRowData(r);
+    MainWindowTableItem *currItem = MainWindowModel::testTableAdapter.getRowData(r);
 
     int currCol = currIndex.column();
     if(currCol < 0) { currCol = 0; }
 
-    testTableAdapter.beginResetModel();
+    MainWindowModel::testTableAdapter.beginResetModel();
 
     foreach (MainWindowTreeFolder *tc, MainWindowModel::tree) {
         MainWindowModel::ClearVisibleTableItems(tc);
@@ -476,14 +436,14 @@ void MainWindow::on_actionSet_Filter_triggered()
         }
     }
 
-    testTableAdapter.endResetModel();
+    MainWindowModel::testTableAdapter.endResetModel();
 
     QModelIndex newIndex;
-    int newRow = testTableAdapter.rowByData(currItem);
-    if((newRow < 0) && (testTableAdapter.rowCount(QModelIndex()) > 0)) { newRow = 0; }
+    int newRow = MainWindowModel::testTableAdapter.rowByData(currItem);
+    if((newRow < 0) && (MainWindowModel::testTableAdapter.rowCount(QModelIndex()) > 0)) { newRow = 0; }
 
     if( newRow >= 0 ) {
-        newIndex = testTableAdapter.index(newRow, currCol);
+        newIndex = MainWindowModel::testTableAdapter.index(newRow, currCol);
         ui->testTableView->setCurrentIndex(newIndex);
     } else {
         emit this->on_testTableViewSelectionChanged(QItemSelection(), QItemSelection());

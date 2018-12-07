@@ -28,10 +28,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 {
     ui->setupUi(this);
 
-    testTableAdapter.Init(nullptr, nullptr);
+    MainWindowModel::testTableAdapter.Init(nullptr, nullptr);
 
-    ui->testTreeView->setModel(&testTreeAdapter);
-    ui->testTableView->setModel(&testTableAdapter);
+    ui->testTreeView->setModel(&MainWindowModel::testTreeAdapter);
+    ui->testTableView->setModel(&MainWindowModel::testTableAdapter);
 
     connect(ui->testTreeView->selectionModel(),
           SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
@@ -101,6 +101,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     QAction *descRunAction = new QAction("edit Run Description", this);
     tableHeadContextMenu.addAction(descRunAction);
+
+    // Table head click
+    connect(ui->testTableView->horizontalHeader(), SIGNAL(sectionClicked(int)),
+            this, SLOT(on_testTableHeaderClicked(int)));
 }
 
 MainWindow::~MainWindow()
@@ -123,7 +127,7 @@ PlanNewDialog *MainWindow::createPlanNewDialog(QWidget *parent)
     PlanNewDialog *dlg = new PlanNewDialog(parent);
     for(int i = 0; i < MainWindowModel::tree.count(); i++) {
         MainWindowTreeFolder *mwRootTreeFolder = MainWindowModel::tree.at(i);
-        if(mwRootTreeFolder->checked) {
+        if(mwRootTreeFolder->checkState != Qt::Unchecked) {
             for(int j = 0; j < mwRootTreeFolder->fullTableItems.count(); j++) {
                 MainWindowTableItem *mwItem = mwRootTreeFolder->fullTableItems.at(j);
                 if(mwItem->checked) {
@@ -146,7 +150,7 @@ void MainWindow::on_testTreeViewSelectionChanged(const QItemSelection& newSelect
     }
 
     if(newTestCaseFolder != nullptr) {
-        if(testTableAdapter.isInitNeeded(&(newTestCaseFolder->visibleTableItems),
+        if(MainWindowModel::testTableAdapter.isInitNeeded(&(newTestCaseFolder->visibleTableItems),
                                          newTestCaseFolder->visibleTableHeaders)) {
             //Save old position
             MainWindowTreeFolder *oldTestCaseFolder = nullptr;
@@ -171,10 +175,10 @@ void MainWindow::on_testTreeViewSelectionChanged(const QItemSelection& newSelect
             }
 
             //Set new data sources
-            testTableAdapter.beginResetModel();
-            testTableAdapter.Init(&(newTestCaseFolder->visibleTableItems),
+            MainWindowModel::testTableAdapter.beginResetModel();
+            MainWindowModel::testTableAdapter.Init(&(newTestCaseFolder->visibleTableItems),
                                   newTestCaseFolder->visibleTableHeaders);
-            testTableAdapter.endResetModel();
+            MainWindowModel::testTableAdapter.endResetModel();
 
             //Restore old position
             int newTableRow = -1;
@@ -188,16 +192,16 @@ void MainWindow::on_testTreeViewSelectionChanged(const QItemSelection& newSelect
 
             //Emit on_testTableViewSelectionChanged
             if(newTableRow >= 0) {
-                QModelIndex newTableInd = testTableAdapter.index(newTableRow, newTableCol);
+                QModelIndex newTableInd = MainWindowModel::testTableAdapter.index(newTableRow, newTableCol);
                 ui->testTableView->setCurrentIndex(newTableInd);
             } else {
                 emit this->on_testTableViewSelectionChanged(QItemSelection(), QItemSelection());
             }
         } //else { visibleTableItems and visibleTableHeaders not changed => nothing to do }
     } else {
-        testTableAdapter.beginResetModel();
-        testTableAdapter.Init(nullptr, nullptr);
-        testTableAdapter.endResetModel();
+        MainWindowModel::testTableAdapter.beginResetModel();
+        MainWindowModel::testTableAdapter.Init(nullptr, nullptr);
+        MainWindowModel::testTableAdapter.endResetModel();
 
         //Emit on_testTableViewSelectionChanged
         emit this->on_testTableViewSelectionChanged(QItemSelection(), QItemSelection());
@@ -212,7 +216,7 @@ void MainWindow::on_testTableViewSelectionChanged(const QItemSelection &newSelec
     {
         //Get new selected test
         QModelIndex newTableIndex = newSelection.at(0).indexes().at(0);
-        newTableItem = testTableAdapter.getRowData(newTableIndex.row());
+        newTableItem = MainWindowModel::testTableAdapter.getRowData(newTableIndex.row());
     }
 
     if((newTableItem != nullptr) && (newTableItem->fullTableHeaders->count() > 0)) {
@@ -278,8 +282,12 @@ void MainWindow::on_testTableViewSelectionChanged(const QItemSelection &newSelec
         emit this->on_rightCompareComboBox_activated(-1);
     }
 
-    if(newTableItem != nullptr) {
-        //Setup tags
+    updateTagList(newTableItem);
+}
+
+void MainWindow::updateTagList(MainWindowTableItem *tableItem)
+{
+    if(tableItem != nullptr) {
 
         //Temporary code for displaying tags
         QString tagList = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\
@@ -289,11 +297,11 @@ void MainWindow::on_testTableViewSelectionChanged(const QItemSelection &newSelec
 
         QString concatenator = "";
 
-        for(int i = 0; i < newTableItem->status->tags.count(); i++)
+        for(int i = 0; i < tableItem->status->tags.count(); i++)
         {
             tagList +=  concatenator + "<span style=\" font-size:8.25pt; text-decoration: underline; color:#0000ff;\"><a href=\"" +
-                        newTableItem->status->tags.at(i) + "#view\">" + newTableItem->status->tags.at(i) + "</a> [<a href=\"" +
-                        newTableItem->status->tags.at(i) + "#remove\">Х</a>]</span>";
+                        tableItem->status->tags.at(i) + "#view\">" + tableItem->status->tags.at(i) + "</a> [<a href=\"" +
+                        tableItem->status->tags.at(i) + "#remove\">Х</a>]</span>";
             concatenator = "<span style=\" font-size:8.25pt;\">; </span>";
         }
         tagList += "</p></body></html>";
@@ -305,12 +313,24 @@ void MainWindow::on_testTableViewSelectionChanged(const QItemSelection &newSelec
     }
 }
 
+
+
+void MainWindow::on_testTableHeaderClicked(int arg1)
+{
+    if(arg1 == 0)
+    {
+        QModelIndex currTreeInd = ui->testTreeView->currentIndex();
+        MainWindowTreeFolder *currTreeFolder = static_cast<MainWindowTreeFolder*>(currTreeInd.internalPointer());
+        MainWindowModel::setCheckState(currTreeFolder);
+    }
+}
+
 void MainWindow::updateComparePanel(int index, QComboBox *compareComboBox, QPlainTextEdit *logBox, QLabel *infoLabel,
     QCheckBox *perfectBox, QCheckBox *theBestBox, SideOfCompareWidget sideOfCompareWidget)
 {
     //Get table item
     QModelIndex tableIndex = ui->testTableView->currentIndex();
-    MainWindowTableItem *testItem = testTableAdapter.getRowData(tableIndex.row());
+    MainWindowTableItem *testItem = MainWindowModel::testTableAdapter.getRowData(tableIndex.row());
 
     // Get widget
     IResultCompareWidget *compareWidget = nullptr;
@@ -411,7 +431,7 @@ void MainWindow::on_leftPerfectBox_clicked(bool checked)
     if(index >= 0) { runNum = ui->leftCompareComboBox->itemData(index).toInt(); }
 
     if(runNum > 0) {
-        UpdateTestStatus(runNum, "perfect", checked);
+        updateTestStatus(runNum, "perfect", checked);
     }
 }
 
@@ -423,7 +443,7 @@ void MainWindow::on_leftTheBestBox_clicked(bool checked)
     if(index >= 0) { runNum = ui->leftCompareComboBox->itemData(index).toInt(); }
 
     if(runNum > 0) {
-        UpdateTestStatus(runNum, "thebest", checked);
+        updateTestStatus(runNum, "thebest", checked);
     }
 }
 
@@ -435,7 +455,7 @@ void MainWindow::on_rightPerfectBox_clicked(bool checked)
     if(index >= 0) { runNum = ui->rightCompareComboBox->itemData(index).toInt(); }
 
     if(runNum > 0) {
-        UpdateTestStatus(runNum, "perfect", checked);
+        updateTestStatus(runNum, "perfect", checked);
     }
 }
 
@@ -447,7 +467,7 @@ void MainWindow::on_rightTheBestBox_clicked(bool checked)
     if(index >= 0) { runNum = ui->rightCompareComboBox->itemData(index).toInt(); }
 
     if(runNum > 0) {
-        UpdateTestStatus(runNum, "thebest", checked);
+        updateTestStatus(runNum, "thebest", checked);
     }
 }
 
@@ -469,7 +489,7 @@ void MainWindow::on_testTreeView_customContextMenuRequested(const QPoint &pos)
 // Tag operations
 void MainWindow::on_attachTagBtn_clicked()
 {
-    AttachTag();
+    attachTag();
 }
 
 void MainWindow::on_tagBox_anchorClicked(const QUrl &arg1)
@@ -490,17 +510,12 @@ void MainWindow::on_tagBox_anchorClicked(const QUrl &arg1)
         {
             //Get table item
             QModelIndex tableIndex = ui->testTableView->currentIndex();
-            MainWindowTableItem *testItem = testTableAdapter.getRowData(tableIndex.row());
+            MainWindowTableItem *testItem = MainWindowModel::testTableAdapter.getRowData(tableIndex.row());
             if(testItem == nullptr) { return; }
-
-            QModelIndex tableInd = ui->testTableView->currentIndex();
-            testTableAdapter.beginResetModel();
 
             testItem->status->tags.removeAll(s.left(p));
             DBManager::SaveTestStatus(testItem->ownerTestCase->fullFileName, testItem->status);
-
-            testTableAdapter.endResetModel();
-            ui->testTableView->setCurrentIndex(tableInd);
+            updateTagList(testItem);
         }
 
         return;

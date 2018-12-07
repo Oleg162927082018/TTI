@@ -43,58 +43,54 @@ QList<OpenTestCaseItem *> &OpenTestCaseDialog::GetOpenTestCaseItemList()
 
 void OpenTestCaseDialog::on_testCaseSelectionChanged(const QItemSelection& newSelection, const QItemSelection &oldSelection)
 {
-    if(!newSelection.indexes().isEmpty())
-    {
-        OpenTestCaseItem *tcItem = dataModel.itemList.at(newSelection.indexes().first().row());
-        if(dataModel.curItem != tcItem) {
+    OpenTestCaseItem *tcItem =nullptr;
 
-            dataModel.curItem = tcItem;
+    if(!newSelection.indexes().isEmpty()) { tcItem = dataModel.itemList.at(newSelection.indexes().first().row()); }
 
-            if(dataModel.curItem != nullptr) {
+    if(tcItem != nullptr) {
 
-                openTestCaseRunDescriptionsController.beginResetModel();
-                openTestCaseRunDescriptionsController.dataSource = &(dataModel.curItem->visibleRunDescriptions);
-                openTestCaseRunDescriptionsController.endResetModel();
-                QModelIndex firstRunDescriptionIndex = openTestCaseRunDescriptionsController.index(0,0);
-                ui->runDescriptionTable->setCurrentIndex(firstRunDescriptionIndex);
+        openTestCaseRunDescriptionsController.beginResetModel();
+        openTestCaseRunDescriptionsController.dataSource = &(tcItem->visibleRunDescriptions);
+        openTestCaseRunDescriptionsController.endResetModel();
 
-                ui->fullFileNameBox->setText(dataModel.curItem->testCase->fullFileName);
+        QModelIndex firstRunDescriptionIndex = openTestCaseRunDescriptionsController.index(0,0);
+        ui->runDescriptionTable->setCurrentIndex(firstRunDescriptionIndex);
 
-                ui->currentConfigBox->clear();
-                for(int i = 0; i < dataModel.curItem->testCase->configList.keys().count(); i++)
-                {
-                    ui->currentConfigBox->addItem(dataModel.curItem->testCase->configList.keys().at(i));
-                }
+        ui->fullFileNameBox->setText(tcItem->testCase->fullFileName);
 
-                ui->currentConfigBox->setCurrentText(dataModel.curItem->testCase->currConfigName);
-                ui->isLoadResultBox->setChecked(dataModel.curItem->isLoadResultsImediately);
-
-                ui->descriptionCheckBox->setChecked(dataModel.curItem->isDescriptionFilter);
-                ui->descriptionComboBox->setEditText(dataModel.curItem->descriptionFilter);
-                ui->toCheckBox->setChecked(dataModel.curItem->isToDateTimeFilter);
-                ui->toDateTimeEdit->setDateTime(dataModel.curItem->toDateTimeFilter);
-                ui->fromCheckBox->setChecked(dataModel.curItem->isFromDateTimeFilter);
-                ui->fromDateTimeEdit->setDateTime(dataModel.curItem->fromDateTimeFilter);
-
-            } else {
-
-                openTestCaseRunDescriptionsController.beginResetModel();
-                openTestCaseRunDescriptionsController.dataSource = nullptr;
-                openTestCaseRunDescriptionsController.endResetModel();
-
-                ui->fullFileNameBox->clear();
-                ui->currentConfigBox->clear();
-                ui->currentConfigBox->clearEditText();
-                ui->isLoadResultBox->setChecked(Qt::Unchecked);
-
-                ui->descriptionCheckBox->setChecked(Qt::Unchecked);
-                ui->descriptionComboBox->clear();
-                ui->fromCheckBox->setChecked(Qt::Unchecked);
-                ui->fromDateTimeEdit->clear();
-                ui->toCheckBox->setChecked(Qt::Unchecked);
-                ui->toDateTimeEdit->clear();
-            }
+        ui->currentConfigBox->clear();
+        for(int i = 0; i < tcItem->testCase->configList.keys().count(); i++)
+        {
+            ui->currentConfigBox->addItem(tcItem->testCase->configList.keys().at(i));
         }
+
+        ui->currentConfigBox->setCurrentText(tcItem->testCase->currConfigName);
+        ui->isLoadResultBox->setChecked(tcItem->isLoadResultsImediately);
+
+        ui->descriptionCheckBox->setChecked(tcItem->isDescriptionFilter);
+        ui->descriptionComboBox->setEditText(tcItem->descriptionFilter);
+        ui->toCheckBox->setChecked(tcItem->isToDateTimeFilter);
+        ui->toDateTimeEdit->setDateTime(tcItem->toDateTimeFilter);
+        ui->fromCheckBox->setChecked(tcItem->isFromDateTimeFilter);
+        ui->fromDateTimeEdit->setDateTime(tcItem->fromDateTimeFilter);
+
+    } else {
+
+        openTestCaseRunDescriptionsController.beginResetModel();
+        openTestCaseRunDescriptionsController.dataSource = nullptr;
+        openTestCaseRunDescriptionsController.endResetModel();
+
+        ui->fullFileNameBox->clear();
+        ui->currentConfigBox->clear();
+        ui->currentConfigBox->clearEditText();
+        ui->isLoadResultBox->setChecked(Qt::Unchecked);
+
+        ui->descriptionCheckBox->setChecked(Qt::Unchecked);
+        ui->descriptionComboBox->clear();
+        ui->fromCheckBox->setChecked(Qt::Unchecked);
+        ui->fromDateTimeEdit->clear();
+        ui->toCheckBox->setChecked(Qt::Unchecked);
+        ui->toDateTimeEdit->clear();
     }
 }
 
@@ -118,10 +114,6 @@ void OpenTestCaseDialog::on_addBtn_clicked()
 
     if(testCaseFileNames.count() > 0)
     {
-        QModelIndex curIndex = ui->testCaseList->currentIndex();
-
-        openTestCaseListController.beginResetModel();
-
         for(int i = 0; i < testCaseFileNames.count(); i++)
         {
             //Check if test-case already appended
@@ -131,96 +123,102 @@ void OpenTestCaseDialog::on_addBtn_clicked()
             }
         }
 
-        openTestCaseListController.endResetModel();
+        openTestCaseListController.emitDataChanged();
 
-        if(!curIndex.isValid()) { curIndex = openTestCaseListController.index(0); }
-        ui->testCaseList->setCurrentIndex(curIndex);
+        if(!ui->testCaseList->currentIndex().isValid()) {
+            ui->testCaseList->setCurrentIndex(openTestCaseListController.index(0));
+        }
     }
 }
 
 void OpenTestCaseDialog::on_delBtn_clicked()
 {
-    int ind = ui->testCaseList->currentIndex().row();
-    if(ind >= 0)
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        openTestCaseListController.beginResetModel();
-        dataModel.removeTestCase(ind);
-        openTestCaseListController.endResetModel();
+        dataModel.removeTestCase(pos);
 
-        if(dataModel.itemList.length() == ind) { ind--; }
+        openTestCaseListController.emitDataChanged();
 
-        if(ind >= 0)
-        {
-            QModelIndex index = openTestCaseListController.index(ind);
-            ui->testCaseList->setCurrentIndex(index);
-        }
-        else
-        {
-            ui->fullFileNameBox->clear();
-            ui->currentConfigBox->clear();
-            ui->currentConfigBox->clearEditText();
-            ui->isLoadResultBox->setChecked(Qt::Unchecked);
-            dataModel.curItem = nullptr;
+        QModelIndex ind = openTestCaseListController.index(pos);
+        if(ind.isValid()) { emit ui->testCaseList->selectionModel()->selectionChanged(QItemSelection(ind, ind), QItemSelection(ind, ind)); }
+        else {
+            ind = openTestCaseListController.index(openTestCaseListController.rowCount(QModelIndex()) - 1);
+            ui->testCaseList->setCurrentIndex(ind);
         }
     }
 }
 
 void OpenTestCaseDialog::on_currentConfigBox_currentIndexChanged(const QString &arg1)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->testCase->currConfigName = arg1;
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->testCase->currConfigName = arg1;
     }
 }
 
 void OpenTestCaseDialog::on_isLoadResultBox_stateChanged(int arg1)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->isLoadResultsImediately = (ui->isLoadResultBox->checkState() == Qt::Checked);
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->isLoadResultsImediately = (ui->isLoadResultBox->checkState() == Qt::Checked);
     }
 }
 
 void OpenTestCaseDialog::on_descriptionCheckBox_stateChanged(int arg1)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->isDescriptionFilter = ui->descriptionCheckBox->checkState() == Qt::Checked;
-        ui->descriptionComboBox->setEnabled(dataModel.curItem->isDescriptionFilter);
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->isDescriptionFilter = ui->descriptionCheckBox->checkState() == Qt::Checked;
+        ui->descriptionComboBox->setEnabled(tcItem->isDescriptionFilter);
     }
 }
 
 void OpenTestCaseDialog::on_fromCheckBox_stateChanged(int arg1)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->isFromDateTimeFilter = ui->fromCheckBox->checkState() == Qt::Checked;
-        ui->fromDateTimeEdit->setEnabled(dataModel.curItem->isFromDateTimeFilter);
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->isFromDateTimeFilter = ui->fromCheckBox->checkState() == Qt::Checked;
+        ui->fromDateTimeEdit->setEnabled(tcItem->isFromDateTimeFilter);
     }
 }
 
 void OpenTestCaseDialog::on_toCheckBox_stateChanged(int arg1)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->isToDateTimeFilter = ui->toCheckBox->checkState() == Qt::Checked;
-        ui->toDateTimeEdit->setEnabled(dataModel.curItem->isToDateTimeFilter);
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->isToDateTimeFilter = ui->toCheckBox->checkState() == Qt::Checked;
+        ui->toDateTimeEdit->setEnabled(tcItem->isToDateTimeFilter);
     }
 }
 
 void OpenTestCaseDialog::on_descriptionComboBox_currentTextChanged(const QString &arg1)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->descriptionFilter = arg1;
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->descriptionFilter = arg1;
     }
 }
 
 void OpenTestCaseDialog::on_fromDateTimeEdit_dateTimeChanged(const QDateTime &dateTime)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->fromDateTimeFilter = dateTime;
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->fromDateTimeFilter = dateTime;
         if(ui->toDateTimeEdit->dateTime() < dateTime) {
             ui->toDateTimeEdit->setDateTime(dateTime);
         }
@@ -229,9 +227,11 @@ void OpenTestCaseDialog::on_fromDateTimeEdit_dateTimeChanged(const QDateTime &da
 
 void OpenTestCaseDialog::on_toDateTimeEdit_dateTimeChanged(const QDateTime &dateTime)
 {
-    if(dataModel.curItem != nullptr )
+    int pos = ui->testCaseList->currentIndex().row();
+    if(pos >= 0)
     {
-        dataModel.curItem->toDateTimeFilter = dateTime;
+        OpenTestCaseItem *tcItem = dataModel.itemList.at(pos);
+        tcItem->toDateTimeFilter = dateTime;
         if(ui->fromDateTimeEdit->dateTime() > dateTime) {
             ui->fromDateTimeEdit->setDateTime(dateTime);
         }

@@ -11,7 +11,7 @@
 
 struct MainWindowTreeFolder
 {
-    bool checked = true;
+    int checkState = Qt::Checked;
     bool expanded = false;
     QString name;
 

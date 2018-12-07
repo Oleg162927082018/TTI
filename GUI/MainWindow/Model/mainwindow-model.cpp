@@ -5,6 +5,8 @@
 #include <QFileInfo>
 
 QList<MainWindowTreeFolder *> MainWindowModel::tree;
+TestTreeAdapter MainWindowModel::testTreeAdapter;
+TestTableAdapter MainWindowModel::testTableAdapter;
 
 MainWindowModel::MainWindowModel()
 {
@@ -59,6 +61,91 @@ void MainWindowModel::SetVisibleTableItem(MainWindowTreeFolder *treeFolder, Main
             foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
                 SetVisibleTableItem(subFolder, tableItem, isVisible);
             }
+        }
+    }
+}
+
+void MainWindowModel::setCheckStateSubFolder(MainWindowTreeFolder *folder, int checkState)
+{
+    folder->checkState = checkState;
+    foreach (MainWindowTreeFolder *subfolder, folder->subFolders) {
+        setCheckStateSubFolder(subfolder, checkState);
+    }}
+
+void MainWindowModel::setParentCheckState(MainWindowTreeFolder *folder)
+{
+    if(folder != nullptr) {
+
+        int checked_count = 0, unchecked_count = 0, partially_count = 0;
+
+        foreach(MainWindowTreeFolder *subFolder, folder->subFolders) {
+            switch(subFolder->checkState) {
+                case Qt::Checked: checked_count++;
+                    break;
+                case Qt::Unchecked: unchecked_count++;
+                    break;
+                case Qt::PartiallyChecked: partially_count++;
+                    break;
+            }
+        }
+        foreach(MainWindowTableItem *tableItem, folder->fullTableItems) {
+            if(tableItem->checked) { checked_count++; } else { unchecked_count++; }
+        }
+
+        int parentCheckState;
+        if((partially_count == 0) && (unchecked_count == 0)) { parentCheckState = Qt::Checked; }
+        else if((partially_count == 0) && (checked_count == 0)) { parentCheckState = Qt::Unchecked; }
+        else { parentCheckState = Qt::PartiallyChecked; }
+
+        if(folder->checkState != parentCheckState) {
+            folder->checkState = parentCheckState;
+            setParentCheckState(folder->parentFolder);
+        }
+    }
+}
+
+void MainWindowModel::setCheckState(MainWindowTreeFolder *folder)
+{
+    bool isChecked = false;
+
+    foreach (MainWindowTableItem *tableItem, folder->fullTableItems) {
+        if(!tableItem->checked) {
+            isChecked = true;
+            break;
+        }
+    }
+
+    foreach (MainWindowTableItem *tableItem, folder->fullTableItems) {
+        tableItem->checked = isChecked;
+    }
+    setCheckStateSubFolder(folder, isChecked?Qt::Checked:Qt::Unchecked);
+    setParentCheckState(folder->parentFolder);
+
+    testTreeAdapter.emitDataChanged();
+    testTableAdapter.emitDataChanged();
+}
+
+MainWindowTreeFolder *MainWindowModel::findOwnerFolder(MainWindowTableItem *tableItem, MainWindowTreeFolder *rootFolder)
+{
+    foreach(MainWindowTreeFolder *subFolder, rootFolder->subFolders) {
+        if(subFolder->fullTableItems.contains(tableItem)) {
+            return findOwnerFolder(tableItem, subFolder);
+        }
+    }
+
+    return rootFolder;
+}
+
+void MainWindowModel::setCheckState(MainWindowTableItem *tableItem, bool isChecked)
+{
+    tableItem->checked = isChecked;
+    foreach (MainWindowTreeFolder *rootFolder, tree) {
+        if(rootFolder->ownerTestCase == tableItem->ownerTestCase) {
+            MainWindowTreeFolder *ownerFolder = findOwnerFolder(tableItem, rootFolder);
+            setParentCheckState(ownerFolder);
+            testTreeAdapter.emitDataChanged();
+            testTableAdapter.emitDataChanged();
+            break;
         }
     }
 }

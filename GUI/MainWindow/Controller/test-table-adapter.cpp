@@ -2,6 +2,8 @@
 
 #include <QBrush>
 
+#include <GUI/MainWindow/Model/mainwindow-model.h>
+
 TestTableAdapter::TestTableAdapter()
 {
 
@@ -28,6 +30,13 @@ void TestTableAdapter::beginResetModel()
 void TestTableAdapter::endResetModel()
 {
     QAbstractTableModel::endResetModel();
+}
+
+void TestTableAdapter::emitDataChanged()
+{
+    QModelIndex topLeft = this->index(0,0);
+    QModelIndex bottomRight = this->index(rowCount(QModelIndex()) - 1, columnCount(QModelIndex()) - 1);
+    emit dataChanged(topLeft, bottomRight);
 }
 
 MainWindowTableItem *TestTableAdapter::getRowData(int pos)
@@ -78,8 +87,16 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
     int row = index.row();
     int col = index.column();
 
-    if (role == Qt::DisplayRole)
-    {
+    if (role == Qt::CheckStateRole) {
+
+        if(index.column() == 0)
+        {
+            MainWindowTableItem *test = rowSource->at(row);
+            return (test->checked)?(Qt::Checked):(Qt::Unchecked);
+        }
+
+    } else if (role == Qt::DisplayRole) {
+
         if(col == 0)
         {
             return QVariant(rowSource->at(row)->name);
@@ -148,5 +165,44 @@ QVariant TestTableAdapter::headerData(int section, Qt::Orientation orientation, 
         }*/
      }
 
-     return QVariant();
+    return QVariant();
+}
+
+Qt::ItemFlags TestTableAdapter::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags flags = this->QAbstractTableModel::flags(index);
+
+    if(index.column() == 0)
+    {
+        flags |= Qt::ItemIsUserCheckable;
+    }
+
+    return flags;
+}
+
+bool TestTableAdapter::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    bool success = true;
+
+    if (index.isValid())
+    {
+        if (role == Qt::CheckStateRole)
+        {
+            MainWindowTableItem *test = rowSource->at(index.row());
+
+            MainWindowModel::setCheckState(test, value.toBool());
+
+            QModelIndex topLeft = this->index(0,0);
+            QModelIndex bottomRight = this->index(-1, -1);
+            emit this->dataChanged(topLeft, bottomRight);
+
+            success = true;
+        }
+    }
+    else
+    {
+        success = false;
+    }
+
+    return success;
 }

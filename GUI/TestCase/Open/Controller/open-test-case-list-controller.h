@@ -15,12 +15,10 @@ public:
 
     OpenTestCaseListController(QObject* parent = nullptr);
 
-    void beginResetModel();
-    void endResetModel();
-
-    // QAbstractItemModel interface
-private:
+    void emitDataChanged();
     int rowCount(const QModelIndex &parent) const;
+
+private:
     QVariant data(const QModelIndex &index, int role) const;
 
 };
