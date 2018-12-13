@@ -431,8 +431,7 @@ void MainWindow::on_actionSet_Filter_triggered()
     foreach (MainWindowTreeFolder *tc, MainWindowModel::tree) {
         MainWindowModel::ClearVisibleTableItems(tc);
         foreach (MainWindowTableItem *item, tc->fullTableItems) {
-            MainWindowModel::SetVisibleTableItem(tc, item,
-                filterDlg->isCondition(item->checked, item->name));
+            MainWindowModel::SetVisibleTableItem(tc, item, filterDlg->isCondition(item));
         }
     }
 
