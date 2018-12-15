@@ -22,7 +22,8 @@ public:
     // > 0  if previous not equal current result, value is a metrics
     // == -1 if previous not found
     virtual void CalculateStatus(QStringList consoleOutput, QString outputFullFolderName,
-                                 int exitCode, qint64 exeTimeMs, int benchmarkCompareResult, int previousCompareResult,
+                                 int exitCode, qint64 exeTimeMs,
+                                 int *benchmarkCompareResult, int *previousCompareResult,
                                  QString &out_status, QColor &out_color) = 0;
     virtual int Compare(QString outputFullFolderName1, QString outputFullFolderName2) = 0;
 };

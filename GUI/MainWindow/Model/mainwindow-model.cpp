@@ -261,7 +261,7 @@ void MainWindowModel::LoadFolderResults(MainWindowTreeFolder *folder)
             TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                      test->status->relativeFileName,
                                                      DBManager::GetRunName(keyRun));
-            test->results.insert(keyRun, r);
+            if(r != nullptr) { test->results.insert(keyRun, r); }
         }
     }
 }
@@ -282,8 +282,7 @@ void MainWindowModel::LoadRunResults(MainWindowTreeFolder *folder, MainWindowTab
         TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                  test->status->relativeFileName,
                                                  DBManager::GetRunName(run->runDescription->Num));
-
-        test->results.insert(run->runDescription->Num, r);
+        if( r != nullptr) { test->results.insert(run->runDescription->Num, r); }
     }
 }
 
@@ -302,7 +301,7 @@ void MainWindowModel::LoadTestResults(MainWindowTreeFolder *folder, MainWindowTa
         TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                  test->status->relativeFileName,
                                                  DBManager::GetRunName(runNum));
-        test->results.insert(runNum, r);
+        if(r != nullptr ) { test->results.insert(runNum, r); }
     }
 }
 
@@ -319,7 +318,7 @@ void MainWindowModel::LoadOneResult(MainWindowTreeFolder *folder, MainWindowTabl
     TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                              test->status->relativeFileName,
                                              DBManager::GetRunName(run->runDescription->Num));
-    test->results.insert(run->runDescription->Num, r);
+    if(r != nullptr ) { test->results.insert(run->runDescription->Num, r); }
 }
 
 void MainWindowModel::DeleteTree()

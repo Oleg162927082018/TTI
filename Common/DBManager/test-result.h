@@ -4,18 +4,25 @@
 #include <QString>
 #include <QColor>
 
+struct TestCompareResult
+{
+    QString status;
+    QString runMark;
+    QString outMark;
+    int compareResult;
+};
+
 struct TestResult
 {
+    ~TestResult() {
+        if(benchmark != nullptr) { delete benchmark; }
+        if(previous != nullptr) { delete previous; }
+    }
+
     QString outMark;
 
-    QString benchmarkStatus;
-    QString benchmarkRunMark;
-    QString benchmarkOutMark;
-    int benchmarkCompareResult;
-
-    QString previousRunMark;
-    QString previousOutMark;
-    int previousCompareResult;
+    TestCompareResult *benchmark = nullptr;
+    TestCompareResult *previous = nullptr;
 
     QString exitStatus;
     int exitCode;

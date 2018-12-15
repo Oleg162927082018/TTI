@@ -400,12 +400,13 @@ void RunManager::beginTest(PlanQueueItem *plan)
         if((ts != nullptr) && (ts->benchmarks.keys().count() > 0))
         {
             int lastBenchmarkRunNum = ts->benchmarks.keys().last();
-            tstInf->testResult.benchmarkRunMark = DBManager::GetRunName(lastBenchmarkRunNum);
-            tstInf->testResult.benchmarkOutMark = ts->benchmarks.value(lastBenchmarkRunNum).outMark;
-            tstInf->testResult.benchmarkStatus = ts->benchmarks.value(lastBenchmarkRunNum).status;
+            tstInf->testResult.benchmark = new TestCompareResult();
+            tstInf->testResult.benchmark->runMark = DBManager::GetRunName(lastBenchmarkRunNum);
+            tstInf->testResult.benchmark->outMark = ts->benchmarks.value(lastBenchmarkRunNum).outMark;
+            tstInf->testResult.benchmark->status = ts->benchmarks.value(lastBenchmarkRunNum).status;
             tstInf->benchmarkOutputFullFolderName =
                     DBManager::GetOutFolder(plan->processedTestCaseFullFileName,
-                                            tstInf->testName, tstInf->testResult.benchmarkOutMark);
+                                            tstInf->testName, tstInf->testResult.benchmark->outMark);
         }
 
         if(ts != nullptr) { delete ts; }
@@ -473,7 +474,7 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
                   plan->processedTestCaseFullFileName,plan->processedTestCaseRunName,testInfo->testName,"log")).remove();
     }
 
-    if((testInfo->compressionLevel != 0) && (testInfo->testResult.benchmarkCompareResult == -1) && (testInfo->testResult.exitCode == 0))
+    if((testInfo->compressionLevel != 0) && (testInfo->testResult.benchmark == nullptr) && (testInfo->testResult.exitCode == 0))
     {
         //Run was success but benchmark not found, so current result set as the best benchmark
         int runNum = plan->processedTestCaseRunName.toInt();

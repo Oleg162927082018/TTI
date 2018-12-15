@@ -92,12 +92,12 @@ bool SetFilterDialog::isCondition(MainWindowTableItem *item)
             checkEqualCondition(ui->exitCodeEqualComboBox->currentIndex(), result->exitCode,
                                 ui->exitCodeSpinBox->value(), isExitCodeCondition); }
 
-        if((isTheBestChecked) && (result != nullptr)) {
-            checkEqualCondition(ui->diffTheBestEqualComboBox->currentIndex(), result->benchmarkCompareResult,
+        if((isTheBestChecked) && (result != nullptr) && (result->benchmark != nullptr)) {
+            checkEqualCondition(ui->diffTheBestEqualComboBox->currentIndex(), result->benchmark->compareResult,
                                 ui->diffTheBestSpinBox->value(), isTheBestCondition); }
 
-        if((isPreviousChecked) && (result != nullptr)) {
-            checkEqualCondition(ui->diffPreviousEqualComboBox->currentIndex(), result->previousCompareResult,
+        if((isPreviousChecked) && (result != nullptr) && (result->previous != nullptr)) {
+            checkEqualCondition(ui->diffPreviousEqualComboBox->currentIndex(), result->previous->compareResult,
                                 ui->diffPreviousSpinBox->value(), isPreviousCondition); }
 
         if((isChangedChecked) && (result != nullptr) && (previous != nullptr)) {
@@ -106,7 +106,6 @@ bool SetFilterDialog::isCondition(MainWindowTableItem *item)
             }
         }
     }
-
 
     bool summaryCondition = true;
     if(isMarkChecked && !isMarkCondition) { summaryCondition = false; }

@@ -478,16 +478,22 @@ TestResult *DBManager::GetTestResult(QString testCaseFullFileName, QString relat
                 result->outMark = outElement.text();
 
                 QDomElement benchmarkElement = rootElement.firstChildElement("benchmark");
-                result->benchmarkOutMark = benchmarkElement.attribute("out");
-                result->benchmarkRunMark = benchmarkElement.attribute("run");
-                result->benchmarkStatus = benchmarkElement.attribute("status");
-                result->benchmarkCompareResult = benchmarkElement.text().toInt();
-
+                if(!benchmarkElement.isNull()) {
+                    result->benchmark = new TestCompareResult();
+                    result->benchmark->status = benchmarkElement.attribute("status");
+                    result->benchmark->outMark = benchmarkElement.attribute("out");
+                    result->benchmark->runMark = benchmarkElement.attribute("run");
+                    result->benchmark->compareResult = benchmarkElement.text().toInt();
+                }
 
                 QDomElement previousElement = rootElement.firstChildElement("previous");
-                result->previousOutMark = previousElement.attribute("out");
-                result->previousRunMark = previousElement.attribute("run");
-                result->previousCompareResult = previousElement.text().toInt();
+                if(!previousElement.isNull()) {
+                    result->previous = new TestCompareResult();
+                    result->previous->status = "";
+                    result->previous->outMark = previousElement.attribute("out");
+                    result->previous->runMark = previousElement.attribute("run");
+                    result->previous->compareResult = previousElement.text().toInt();
+                }
 
                 QDomElement exitElement = rootElement.firstChildElement("exit-code");
                 result->exitStatus = exitElement.attribute("status");
@@ -678,30 +684,30 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
     outputElement.appendChild(outputValue);
 
     //Benchmark
-    if(!tr->benchmarkRunMark.isEmpty())
-    {
+    if(tr->benchmark != nullptr) {
+
         QDomElement benchmarkElement = doc.createElement("benchmark");
         rootNode.appendChild(benchmarkElement);
 
-        QDomText benchmarkValue = doc.createTextNode(QString::number(tr->benchmarkCompareResult));
+        QDomText benchmarkValue = doc.createTextNode(QString::number(tr->benchmark->compareResult));
         benchmarkElement.appendChild(benchmarkValue);
 
-        benchmarkElement.setAttribute("run", tr->benchmarkRunMark);
-        benchmarkElement.setAttribute("out", tr->benchmarkOutMark);
-        benchmarkElement.setAttribute("status", tr->benchmarkStatus);
+        benchmarkElement.setAttribute("run", tr->benchmark->runMark);
+        benchmarkElement.setAttribute("out", tr->benchmark->outMark);
+        benchmarkElement.setAttribute("status", tr->benchmark->status);
     }
 
     //Previous
-    if(!tr->previousRunMark.isEmpty())
-    {
+    if(tr->previous != nullptr) {
+
         QDomElement previousElement = doc.createElement("previous");
         rootNode.appendChild(previousElement);
 
-        QDomText previousValue = doc.createTextNode(QString::number(tr->previousCompareResult));
+        QDomText previousValue = doc.createTextNode(QString::number(tr->previous->compareResult));
         previousElement.appendChild(previousValue);
 
-        previousElement.setAttribute("run", tr->previousRunMark);
-        previousElement.setAttribute("out", tr->previousOutMark);
+        previousElement.setAttribute("run", tr->previous->runMark);
+        previousElement.setAttribute("out", tr->previous->outMark);
     }
 
     //Exit code
