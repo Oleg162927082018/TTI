@@ -415,11 +415,21 @@ void RunManager::beginTest(PlanQueueItem *plan)
 
     if(plan->processedTestCaseCompressionLevel > 1)
     {
-        TestResult *tr =
-                DBManager::GetTestResult(plan->processedTestCaseFullFileName, tstInf->testName,
-                                                  DBManager::GetRunName(plan->processedTestCaseRunName.toInt() - 1));
+        TestResult *tr = nullptr;
+        QString previousRunMark;
+
+        int previousRun = plan->processedTestCaseRunName.toInt();
+        while((previousRun > 1) && (tr == nullptr)) {
+            --previousRun;
+            previousRunMark = DBManager::GetRunName(previousRun);
+            tr = DBManager::GetTestResult(plan->processedTestCaseFullFileName, tstInf->testName, previousRunMark);
+        }
+
         if(tr != nullptr)
         {
+            tstInf->testResult.previous = new TestCompareResult();
+            tstInf->testResult.previous->runMark = previousRunMark;
+            tstInf->testResult.previous->outMark = tr->outMark;
             tstInf->previousOutputFullFolderName =
                     DBManager::GetOutFolder(plan->processedTestCaseFullFileName, tstInf->testName, tr->outMark);
             delete tr;
