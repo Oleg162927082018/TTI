@@ -43,7 +43,6 @@ public:
     static void AddRunHeader(MainWindowTreeFolder *treeFolder, RunDescription *runDesc, bool isVisible);
     static void DeleteTree();
 
-    static void ClearVisibleTableItems(MainWindowTreeFolder *treeFolder);
     static void SetVisibleTableItem(MainWindowTreeFolder *treeFolder, MainWindowTableItem *tableItem, bool isVisible);
 
     static void setCheckState(MainWindowTreeFolder *folder);

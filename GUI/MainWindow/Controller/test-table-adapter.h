@@ -12,8 +12,8 @@ public:
     TestTableAdapter();
 
     //Return true if new rowHeaders and new columnHeaders was setted up
-    bool isInitNeeded(QList<MainWindowTableItem*> *rowHeaders, QMap<int, MainWindowTableHeader *> *columnHeaders);
-    void Init(QList<MainWindowTableItem*> *rowHeaders, QMap<int, MainWindowTableHeader *> *columnHeaders);
+    bool isInitNeeded(QMap<int, MainWindowTableItem*> *rowHeaders, QMap<int, MainWindowTableHeader *> *columnHeaders);
+    void Init(QMap<int, MainWindowTableItem*> *rowHeaders, QMap<int, MainWindowTableHeader *> *columnHeaders);
 
     void beginResetModel();
     void endResetModel();
@@ -31,7 +31,7 @@ private:
     bool setData(const QModelIndex &index, const QVariant &value, int role);
 
 private:
-    QList<MainWindowTableItem*> *rowSource = nullptr;
+    QMap<int, MainWindowTableItem*> *rowSource = nullptr;
     QMap<int, MainWindowTableHeader *> *headerSource = nullptr;
 };
 

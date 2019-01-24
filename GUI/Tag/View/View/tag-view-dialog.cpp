@@ -20,21 +20,23 @@ TagViewDialog::~TagViewDialog()
     delete ui;
 }
 
-void TagViewDialog::setTag(QString tagPath)
+void TagViewDialog::displayTag(QString tagLink)
 {
     QString config;
 
-    ui->tagNameBox->setText(tagPath);
-    TagItem *tagItem = TagManager::FindTagByPath(tagPath);
-    if(tagItem == nullptr) { return; }
+    ui->tagNameBox->setText(tagLink);
+    Tag *tag = TagManager::getTagByLink(tagLink);
+    if(tag == nullptr) { return; }
 
-    ITagAdapter *tagAdapter = TagManager::GetTagAdapter(tagItem->tag->type);
+    ITagAdapter *tagAdapter = TagManager::GetTagAdapter(tag->type);
     if(tagAdapter == nullptr) { return; }
     ITagWidget *viewTagWidget = tagAdapter->GetTagViewWidget(this);
     if(viewTagWidget == nullptr) { return; }
 
-    viewTagWidget->SetData(config, tagItem->tag->data);
+    viewTagWidget->SetData(config, tag->data);
     ui->verticalLayout->insertWidget(1,viewTagWidget);
+
+    exec();
 }
 
 void TagViewDialog::on_closeBtn_clicked()

@@ -310,7 +310,8 @@ void MainWindow::on_actionLoadTestResult_triggered()
     MainWindowTreeFolder *tf = static_cast<MainWindowTreeFolder *>(indexTree.internalPointer());
 
     QModelIndex indexTable = ui->testTableView->currentIndex();
-    MainWindowTableItem *test = tf->visibleTableItems.at(indexTable.row());
+    int key = tf->visibleTableItems.keys().at(indexTable.row());
+    MainWindowTableItem *test = tf->visibleTableItems.value(key);
 
     if((tf != nullptr) && (test != nullptr))
     {
@@ -344,7 +345,8 @@ void MainWindow::on_actionLoadOneResult_triggered()
     MainWindowTreeFolder *tf = static_cast<MainWindowTreeFolder*>(indexTree.internalPointer());
 
     QModelIndex indexTable = ui->testTableView->currentIndex();
-    MainWindowTableItem *test = tf->visibleTableItems.at(indexTable.row());
+    int key = tf->visibleTableItems.keys().at(indexTable.row());
+    MainWindowTableItem *test = tf->visibleTableItems.value(key);
 
     int colRun = indexTable.column() - 1;
     if(colRun < 0) { return; }
@@ -363,16 +365,15 @@ void MainWindow::attachTag()
     TagDispatcherDialog dlg(TagDispatcherDialog::ACTION_SELECT, this);
     dlg.exec();
 
-    TagItem *tagItem = dlg.getSelectResult();
+    TagDispatcherItem *tagItem = dlg.getSelectedResult();
     if((tagItem != nullptr) && (tagItem->tag != nullptr))
     {
-
         //Get table item
         QModelIndex tableIndex = ui->testTableView->currentIndex();
         MainWindowTableItem *testItem = MainWindowModel::testTableAdapter.getRowData(tableIndex.row());
         if(testItem == nullptr) { return; }
 
-        testItem->status->tags.append(tagItem->path);
+        testItem->status->tags.append(TagManager::GetTagLink(tagItem->tag));
         DBManager::SaveTestStatus(testItem->ownerTestCase->fullFileName, testItem->status);
 
         updateTagList(testItem);
@@ -429,7 +430,6 @@ void MainWindow::on_actionSet_Filter_triggered()
     MainWindowModel::testTableAdapter.beginResetModel();
 
     foreach (MainWindowTreeFolder *tc, MainWindowModel::tree) {
-        MainWindowModel::ClearVisibleTableItems(tc);
         foreach (MainWindowTableItem *item, tc->fullTableItems) {
             MainWindowModel::SetVisibleTableItem(tc, item, filterDlg->isCondition(item));
         }

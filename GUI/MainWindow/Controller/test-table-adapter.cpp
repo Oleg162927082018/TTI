@@ -9,14 +9,14 @@ TestTableAdapter::TestTableAdapter()
 
 }
 
-bool TestTableAdapter::isInitNeeded(QList<MainWindowTableItem*> *rows, QMap<int, MainWindowTableHeader *> *headers)
+bool TestTableAdapter::isInitNeeded(QMap<int, MainWindowTableItem*> *rows, QMap<int, MainWindowTableHeader *> *headers)
 {
     if((rowSource != rows) ||
             (headerSource != headers)) { return true; }
     else { return false; }
 }
 
-void TestTableAdapter::Init(QList<MainWindowTableItem*> *rows, QMap<int, MainWindowTableHeader *> *headers)
+void TestTableAdapter::Init(QMap<int, MainWindowTableItem*> *rows, QMap<int, MainWindowTableHeader *> *headers)
 {
     rowSource = rows;
     headerSource = headers;
@@ -42,7 +42,8 @@ void TestTableAdapter::emitDataChanged()
 MainWindowTableItem *TestTableAdapter::getRowData(int pos)
 {
     if((0 <= pos) && (pos < rowSource->count())) {
-        return rowSource->at(pos);
+        int key = rowSource->keys().at(pos);
+        return rowSource->value(key);
     } else {
         return nullptr;
     }
@@ -52,7 +53,8 @@ int TestTableAdapter::rowByData(MainWindowTableItem *data)
 {
     if(rowSource != nullptr)
     {
-        return rowSource->indexOf(data);
+        int key = rowSource->key(data);
+        return rowSource->keys().indexOf(key);
     }
 
     return -1;
@@ -91,7 +93,8 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
 
         if(index.column() == 0)
         {
-            MainWindowTableItem *test = rowSource->at(row);
+            int key = rowSource->keys().at(row);
+            MainWindowTableItem *test = rowSource->value(key);
             return (test->checked)?(Qt::Checked):(Qt::Unchecked);
         }
 
@@ -99,13 +102,15 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
 
         if(col == 0)
         {
-            return QVariant(rowSource->at(row)->name);
+            int key = rowSource->keys().at(row);
+            return QVariant(rowSource->value(key)->name);
         }
         else if(col > 0)
         {
             int runNum = headerSource->keys().at(col - 1);
 
-            MainWindowTableItem *test = rowSource->at(row);
+            int key = rowSource->keys().at(row);
+            MainWindowTableItem *test = rowSource->value(key);
             if(test->results.keys().contains(runNum)) {
 
                 if(test->status->benchmarks.contains(runNum)) {
@@ -127,7 +132,8 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
         else
         {
             int runNum = headerSource->keys().at(col - 1);
-            MainWindowTableItem *test = rowSource->at(row);
+            int key = rowSource->keys().at(row);
+            MainWindowTableItem *test = rowSource->value(key);
             if(test->results.keys().contains(runNum)) {
 
                 if(test->status->benchmarks.contains(runNum)) {
@@ -188,7 +194,8 @@ bool TestTableAdapter::setData(const QModelIndex &index, const QVariant &value, 
     {
         if (role == Qt::CheckStateRole)
         {
-            MainWindowTableItem *test = rowSource->at(index.row());
+            int key = rowSource->keys().at(index.row());
+            MainWindowTableItem *test = rowSource->value(key);
 
             MainWindowModel::setCheckState(test, value.toBool());
 

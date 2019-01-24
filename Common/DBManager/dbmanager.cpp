@@ -775,92 +775,19 @@ QVector<int> *DBManager::GetOutList(QString testCaseFullFileName, QString relati
     return result;
 }
 
-void DBManager::SaveTagCollection(TagItem *tagCollection)
+TagCollection *DBManager::LoadTagCollection(QString fullFileName)
 {
-    QDomDocument doc;
-
-    //Root
-    QDomNode xmlNode = doc.createProcessingInstruction("xml","version=\"1.0\" encoding=\"UTF-8\"");
-    doc.insertBefore(xmlNode, doc.firstChild());
-
-    QDomElement rootNode = doc.createElement("collection");
-    doc.appendChild(rootNode);
-
-    //Description
-    QDomElement descriptionNode = doc.createElement("description");
-    rootNode.appendChild(descriptionNode);
-
-    QDomCDATASection descriptionValue = doc.createCDATASection(tagCollection->collection->description);
-    descriptionNode.appendChild(descriptionValue);
-
-    QDomElement tagsNode = doc.createElement("tags");
-    rootNode.appendChild(tagsNode);
-
-    SaveTagFolderElements(tagsNode, tagCollection);
-
-    //Save
-    QFileInfo saveFileInfo(tagCollection->collection->fullFileName);
-    QDir().mkpath(saveFileInfo.absolutePath());
-
-    QFile file(tagCollection->collection->fullFileName);
-    if(file.open(QIODevice::WriteOnly)) {
-        QTextStream stream(&file);
-        stream << doc.toString();
-        file.close();
-    }
-}
-
-void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagItem *tagItem)
-{
-    for(int i = 0; i < tagItem->subItems.length(); i++)
-    {
-        TagItem *subItem = tagItem->subItems.at(i);
-
-        if(subItem->tag != nullptr)
-        {
-            QDomElement tagElement = folderElement.ownerDocument().createElement("tag");
-            folderElement.appendChild(tagElement);
-
-            tagElement.setAttribute("type", subItem->tag->type);
-            tagElement.setAttribute("name", subItem->name);
-
-            QDomCDATASection dataValue = folderElement.ownerDocument().createCDATASection(subItem->tag->data);
-            tagElement.appendChild(dataValue);
-        }
-        else //folder
-        {
-            QDomElement subFolderElement = folderElement.ownerDocument().createElement("folder");
-            folderElement.appendChild(subFolderElement);
-
-            subFolderElement.setAttribute("name", subItem->name);
-
-            //Description
-            QDomElement descriptionNode = folderElement.ownerDocument().createElement("description");
-            subFolderElement.appendChild(descriptionNode);
-
-            QDomCDATASection descriptionValue = folderElement.ownerDocument().createCDATASection(subItem->folder->description);
-            descriptionNode.appendChild(descriptionValue);
-
-            //Sub folders
-            SaveTagFolderElements(subFolderElement, subItem);
-        }
-    }
-}
-
-TagItem *DBManager::GetTagCollection(QString fullFileName)
-{
-    TagItem *tagCollection = nullptr;
+    TagCollection *tagCollection = nullptr;
 
     QFile file(fullFileName);
     if(file.open(QIODevice::ReadOnly)) {
         QDomDocument doc;
         if(doc.setContent(&file)) {
-            tagCollection = new TagItem();
-            tagCollection->collection = new TagCollection();
+            tagCollection = new TagCollection();
+            tagCollection->owner = tagCollection;
 
             tagCollection->name = QFileInfo(fullFileName).baseName();
-            tagCollection->path = tagCollection->name;
-            tagCollection->collection->fullFileName = fullFileName;
+            tagCollection->fullFileName = fullFileName;
 
             //Parse Xml Document
             QDomElement collectionElement = doc.firstChildElement("collection");
@@ -869,18 +796,18 @@ TagItem *DBManager::GetTagCollection(QString fullFileName)
             QDomElement descriptionElement = collectionElement.firstChildElement("description");
             if(!descriptionElement.isNull())
             {
-                tagCollection->collection->description = descriptionElement.firstChild().toCDATASection().data();
+                tagCollection->description = descriptionElement.firstChild().toCDATASection().data();
             }
 
             QDomElement tagsElement = collectionElement.firstChildElement("tags");
-            if(!tagsElement.isNull()) { LoadTagFolderElements(tagsElement, tagCollection); }
+            if(!tagsElement.isNull()) { LoadTagFolderElements(tagsElement, tagCollection, tagCollection); }
         }
         file.close();
     }
     return tagCollection;
 }
 
-void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagItem *tagFolder)
+void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagFolder *tagFolder, TagCollection *owner)
 {
     QDomElement tagListElement = folderElement.firstChildElement();
     while(!tagListElement.isNull())
@@ -888,41 +815,106 @@ void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagItem *tagFo
         QString nodeName = tagListElement.nodeName();
         if(nodeName.compare("tag", Qt::CaseInsensitive) == 0)
         {
-            TagItem *tagItem = new TagItem();
-            tagItem->parent = tagFolder;
-            tagItem->collection = tagFolder->collection;
+            Tag *tag = new Tag();
+            tag->owner = owner;
+            tag->parent = tagFolder;
+            tag->type = tagListElement.attribute("type", "");
+            tag->name = tagListElement.attribute("name","-");
+            tag->data = tagListElement.firstChild().toCDATASection().data();
 
-            tagItem->tag = new Tag();
-            tagItem->tag->type = tagListElement.attribute("type", "");
-            tagItem->name = tagListElement.attribute("name","-");
-            tagItem->path = tagFolder->path + ":" + tagItem->name;
-            tagItem->tag->data = tagListElement.firstChild().toCDATASection().data();
-
-            tagFolder->subItems.append(tagItem);
+            tagFolder->tags.append(tag);
         }
         else if(nodeName.compare("folder", Qt::CaseInsensitive) == 0)
         {
-            TagItem *subFolder = new TagItem();
+            TagFolder *subFolder = new TagFolder();
+            subFolder->owner = owner;
             subFolder->parent = tagFolder;
-            subFolder->collection = tagFolder->collection;
-
-            subFolder->folder = new TagFolder();
             subFolder->name = tagListElement.attribute("name","-");
-            subFolder->path = tagFolder->path + ":" + subFolder->name;
 
             QDomElement folderDescriptionElement = tagListElement.firstChildElement("description");
             if(!folderDescriptionElement.isNull())
             {
-                subFolder->folder->description = folderDescriptionElement.firstChild().toCDATASection().data();
+                subFolder->description = folderDescriptionElement.firstChild().toCDATASection().data();
             }
 
-            LoadTagFolderElements(tagListElement, subFolder);
+            LoadTagFolderElements(tagListElement, subFolder, owner);
 
-            tagFolder->subItems.append(subFolder);
+            tagFolder->folders.append(subFolder);
         }
         tagListElement = tagListElement.nextSiblingElement();
     }
+}
 
+void DBManager::SaveTagCollection(TagCollection *tagCollection)
+{
+    QDomDocument doc;
+
+    //Root
+    QDomNode xmlNode = doc.createProcessingInstruction("xml","version=\"1.0\" encoding=\"UTF-8\"");
+    doc.insertBefore(xmlNode, doc.firstChild());
+
+    QDomElement rootElement = doc.createElement("collection");
+    doc.appendChild(rootElement);
+
+    //Description
+    QDomElement descriptionNode = doc.createElement("description");
+    rootElement.appendChild(descriptionNode);
+
+    QDomCDATASection descriptionValue = doc.createCDATASection(tagCollection->description);
+    descriptionNode.appendChild(descriptionValue);
+
+    QDomElement tagsNode = doc.createElement("tags");
+    rootElement.appendChild(tagsNode);
+
+    SaveTagFolderElements(tagsNode, tagCollection);
+
+    //Save
+    QFileInfo saveFileInfo(tagCollection->fullFileName);
+    QDir().mkpath(saveFileInfo.absolutePath());
+
+    QFile file(tagCollection->fullFileName);
+    if(file.open(QIODevice::WriteOnly)) {
+        QTextStream stream(&file);
+        stream << doc.toString();
+        file.close();
+    }
+}
+
+void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagFolder *tagFolder)
+{
+    for(int i = 0; i < tagFolder->folders.length(); i++)
+    {
+        TagFolder *subFolder = tagFolder->folders.at(i);
+
+        QDomElement subFolderElement = folderElement.ownerDocument().createElement("folder");
+        folderElement.appendChild(subFolderElement);
+
+        subFolderElement.setAttribute("name", subFolder->name);
+
+        //Description
+        QDomElement descriptionNode = folderElement.ownerDocument().createElement("description");
+        subFolderElement.appendChild(descriptionNode);
+
+        QDomCDATASection descriptionValue = folderElement.ownerDocument().createCDATASection(subFolder->description);
+        descriptionNode.appendChild(descriptionValue);
+
+        //Sub folders
+        SaveTagFolderElements(subFolderElement, subFolder);
+    }
+
+    for(int i = 0; i < tagFolder->tags.length(); i++)
+    {
+        Tag *tag = tagFolder->tags.at(i);
+
+        QDomElement tagElement = folderElement.ownerDocument().createElement("tag");
+        folderElement.appendChild(tagElement);
+
+        tagElement.setAttribute("type", tag->type);
+        tagElement.setAttribute("name", tag->name);
+
+        QDomCDATASection dataValue = folderElement.ownerDocument().createCDATASection(tag->data);
+        tagElement.appendChild(dataValue);
+    }
 }
 
 void DBManager::DeleteTagCollection(QString fullFileName)

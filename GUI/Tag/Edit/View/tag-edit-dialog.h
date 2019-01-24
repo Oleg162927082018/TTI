@@ -12,7 +12,7 @@ class TagEditDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit TagEditDialog(QWidget *parent = 0);
+    explicit TagEditDialog(QWidget *parent = nullptr);
     ~TagEditDialog();
 
 private:

@@ -165,7 +165,8 @@ void MainWindow::on_testTreeViewSelectionChanged(const QItemSelection& newSelect
                 QModelIndex oldTableInd = ui->testTableView->currentIndex();
                 int oldRow = oldTableInd.row();
                 if((0 <= oldRow) && (oldRow < oldTestCaseFolder->visibleTableItems.count())) {
-                    oldTableItem = oldTestCaseFolder->visibleTableItems.at(oldRow);
+                    int key = oldTestCaseFolder->visibleTableItems.keys().at(oldRow);
+                    oldTableItem = oldTestCaseFolder->visibleTableItems.value(key);
                 }
                 int oldCol = oldTableInd.column() - 1; // -1 because first column is name of test
                 if((0 <= oldCol) && (oldCol < oldTestCaseFolder->visibleTableHeaders->count())) {
@@ -182,7 +183,10 @@ void MainWindow::on_testTreeViewSelectionChanged(const QItemSelection& newSelect
 
             //Restore old position
             int newTableRow = -1;
-            if(oldTableItem != nullptr) { newTableRow = newTestCaseFolder->visibleTableItems.indexOf(oldTableItem); }
+            if(oldTableItem != nullptr) {
+                int key = newTestCaseFolder->visibleTableItems.key(oldTableItem);
+                newTableRow = newTestCaseFolder->visibleTableItems.keys().indexOf(key);
+            }
             if((newTableRow < 0) && (newTestCaseFolder->visibleTableItems.count() > 0)) { newTableRow = 0; }
 
             int newTableCol = 0;
@@ -290,22 +294,20 @@ void MainWindow::updateTagList(MainWindowTableItem *tableItem)
     if(tableItem != nullptr) {
 
         //Temporary code for displaying tags
-        QString tagList = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\
-    <html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">p, li { white-space: pre-wrap; }</style>\
-    </head><body style=\"font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;\">\
-    <p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">";
-
+        QString tagList = "<html><head></head><body>";
         QString concatenator = "";
 
         for(int i = 0; i < tableItem->status->tags.count(); i++)
         {
+            QString tagLink = tableItem->status->tags.at(i);
+            QString tagName = tagLink.mid(tagLink.lastIndexOf('/') + 1);
             tagList +=  concatenator + "<span style=\" font-size:8.25pt; text-decoration: underline; color:#0000ff;\"><a href=\"" +
-                        tableItem->status->tags.at(i) + "#view\">" + tableItem->status->tags.at(i) + "</a> [<a href=\"" +
-                        tableItem->status->tags.at(i) + "#remove\">Х</a>]</span>";
+                        tagLink + "#view\">" + tagName + "</a> [<a href=\"" + tagLink + "#remove\">Х</a>]</span>";
             concatenator = "<span style=\" font-size:8.25pt;\">; </span>";
         }
-        tagList += "</p></body></html>";
+        tagList += "</body></html>";
 
+        ui->tagBox->clear();
         ui->tagBox->setHtml(tagList);
     } else {
 
@@ -495,10 +497,9 @@ void MainWindow::on_attachTagBtn_clicked()
 void MainWindow::on_tagBox_anchorClicked(const QUrl &arg1)
 {
     QString s = arg1.toString();
-    int p = s.indexOf("#remove");
-
-    if(p > 0)
+    if(s.endsWith("#remove"))
     {
+
         QMessageBox mb("Confirmation",
                        "Are you shure to remove tag link? Tag will not be deleted from collection.",
                        QMessageBox::Question,
@@ -513,21 +514,14 @@ void MainWindow::on_tagBox_anchorClicked(const QUrl &arg1)
             MainWindowTableItem *testItem = MainWindowModel::testTableAdapter.getRowData(tableIndex.row());
             if(testItem == nullptr) { return; }
 
-            testItem->status->tags.removeAll(s.left(p));
+            testItem->status->tags.removeAll(s.left(s.lastIndexOf('#')));
             DBManager::SaveTestStatus(testItem->ownerTestCase->fullFileName, testItem->status);
             updateTagList(testItem);
         }
 
-        return;
-    }
+    } else if(s.endsWith("#view")) {
 
-    p = s.indexOf("#view");
-
-    if(p > 0)
-    {
-        TagViewDialog dlg;
-        dlg.setTag(s.left(p));
-        dlg.exec();
-        return;
+        TagViewDialog dlg(this);
+        dlg.displayTag(s.left(s.lastIndexOf('#')));
     }
 }

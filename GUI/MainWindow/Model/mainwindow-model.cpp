@@ -28,20 +28,9 @@ void MainWindowModel::AddTableItem(MainWindowTreeFolder *treeFolder, MainWindowT
     if(treeFolder != nullptr)
     {
         treeFolder->fullTableItems.append(tableItem);
-        treeFolder->visibleTableItems.append(tableItem);
+        treeFolder->visibleTableItems.insert(treeFolder->fullTableItems.count() - 1,tableItem);
 
         AddTableItem(treeFolder->parentFolder, tableItem);
-    }
-}
-
-void MainWindowModel::ClearVisibleTableItems(MainWindowTreeFolder *treeFolder)
-{
-    if(treeFolder != nullptr)
-    {
-        treeFolder->visibleTableItems.clear();
-        foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
-            ClearVisibleTableItems(subFolder);
-        }
     }
 }
 
@@ -49,13 +38,13 @@ void MainWindowModel::SetVisibleTableItem(MainWindowTreeFolder *treeFolder, Main
 {
     if(treeFolder != nullptr)
     {
-        if(treeFolder->fullTableItems.contains(tableItem))
+        int tableItemInd = treeFolder->fullTableItems.indexOf(tableItem);
+        if(tableItemInd >= 0)
         {
-
-            if(treeFolder->visibleTableItems.contains(tableItem)) {
-                if(!isVisible) { treeFolder->visibleTableItems.removeOne(tableItem); }
+            if(treeFolder->visibleTableItems.keys().contains(tableItemInd)) {
+                if(!isVisible) { treeFolder->visibleTableItems.remove(tableItemInd); }
             } else {
-                if(isVisible) { treeFolder->visibleTableItems.append(tableItem); }
+                if(isVisible) { treeFolder->visibleTableItems.insert(tableItemInd, tableItem); }
             }
 
             foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
@@ -70,7 +59,8 @@ void MainWindowModel::setCheckStateSubFolder(MainWindowTreeFolder *folder, int c
     folder->checkState = checkState;
     foreach (MainWindowTreeFolder *subfolder, folder->subFolders) {
         setCheckStateSubFolder(subfolder, checkState);
-    }}
+    }
+}
 
 void MainWindowModel::setParentCheckState(MainWindowTreeFolder *folder)
 {
@@ -251,9 +241,10 @@ void MainWindowModel::LoadFolderResults(MainWindowTreeFolder *folder)
 
     if(tc == nullptr) { return; }
 
-    for(int i = 0; i < folder->visibleTableItems.length(); i++)
+    for(int i = 0; i < folder->visibleTableItems.count(); i++)
     {
-        MainWindowTableItem *test = folder->visibleTableItems.at(i);
+        int key = folder->visibleTableItems.keys().at(i);
+        MainWindowTableItem *test = folder->visibleTableItems.value(key);
 
         for(int k = 0; k < folder->visibleTableHeaders->count(); k++)
         {
@@ -278,7 +269,8 @@ void MainWindowModel::LoadRunResults(MainWindowTreeFolder *folder, MainWindowTab
 
     for(int i = 0; i < folder->visibleTableItems.count(); i++)
     {
-        MainWindowTableItem *test = folder->visibleTableItems.at(i);
+        int key = folder->visibleTableItems.keys().at(i);
+        MainWindowTableItem *test = folder->visibleTableItems.value(key);
         TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                  test->status->relativeFileName,
                                                  DBManager::GetRunName(run->runDescription->Num));

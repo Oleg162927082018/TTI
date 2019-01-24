@@ -12,7 +12,7 @@ class TagCreateEmptyWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TagCreateEmptyWidget(QWidget *parent = 0);
+    explicit TagCreateEmptyWidget(QWidget *parent = nullptr);
     ~TagCreateEmptyWidget();
 
 private:

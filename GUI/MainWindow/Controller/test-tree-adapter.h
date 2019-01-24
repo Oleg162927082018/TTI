@@ -27,8 +27,6 @@ private:
 
     Qt::ItemFlags flags(const QModelIndex &index) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role);
-    //void setCheckState(MainWindowTreeFolder *folder, int checkState);
-    //void setParentCheckState(MainWindowTreeFolder *folder);
 };
 
 #endif // TESTCASETREEADAPTER_H

@@ -12,10 +12,10 @@ class TagViewDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit TagViewDialog(QWidget *parent = 0);
+    explicit TagViewDialog(QWidget *parent = nullptr);
     ~TagViewDialog();
 
-    void setTag(QString tagPath);
+    void displayTag(QString tagPath);
 
 private slots:
     void on_closeBtn_clicked();

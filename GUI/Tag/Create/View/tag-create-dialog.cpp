@@ -35,6 +35,9 @@ TagCreateDialog::TagCreateDialog(QWidget *parent) :
             }
         }
     }
+
+    QModelIndex firstAdapterIndex = tagTypeListController.index(0);
+    ui->tagTypeList->setCurrentIndex(firstAdapterIndex);
 }
 
 TagCreateDialog::~TagCreateDialog()
@@ -42,26 +45,24 @@ TagCreateDialog::~TagCreateDialog()
     delete ui;
 }
 
-TagItem *TagCreateDialog::createTag(QWidget *parent, TagItem *parentTagItem)
+QString TagCreateDialog::tagID()
 {
-    TagCreateDialog dialog(parent);
-    dialog.ui->tagTypeList->setCurrentIndex(dialog.tagTypeListController.index(0,0));
+    return tagTypeIDList.at(ui->tagTypeList->currentIndex().row());
+}
 
-    if(dialog.exec() == QDialog::Accepted)
-    {
-        QString config;
-        QString data;
-        ITagWidget *tagWidget = static_cast<ITagWidget *>(dialog.ui->editorStacked->currentWidget());
-        tagWidget->GetData(config, data);
+QString TagCreateDialog::tagName()
+{
+    return ui->nameBox->text();
+}
 
-        return TagManager::AddTag(parentTagItem,
-                                  dialog.tagTypeIDList.at(dialog.ui->tagTypeList->currentIndex().row()),
-                                  dialog.ui->nameBox->text(), data);
-    }
-    else
-    {
-        return parentTagItem;
-    }
+QString TagCreateDialog::tagData()
+{
+    QString config;
+    QString data;
+    ITagWidget *tagWidget = static_cast<ITagWidget *>(ui->editorStacked->currentWidget());
+    tagWidget->GetData(config, data);
+
+    return data;
 }
 
 void TagCreateDialog::on_tagTypeListSelectionChanged(const QItemSelection &newSelection, const QItemSelection &oldSelection)

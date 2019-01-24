@@ -423,6 +423,10 @@ void RunManager::beginTest(PlanQueueItem *plan)
             --previousRun;
             previousRunMark = DBManager::GetRunName(previousRun);
             tr = DBManager::GetTestResult(plan->processedTestCaseFullFileName, tstInf->testName, previousRunMark);
+            if(tr->exitCode != 0) {
+                delete tr;
+                tr = nullptr;
+            }
         }
 
         if(tr != nullptr)

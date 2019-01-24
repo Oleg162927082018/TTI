@@ -24,7 +24,7 @@ struct MainWindowTreeFolder
 
 
     QList<MainWindowTableItem *> fullTableItems;
-    QList<MainWindowTableItem *> visibleTableItems;
+    QMap<int, MainWindowTableItem *> visibleTableItems;
 
 };
 

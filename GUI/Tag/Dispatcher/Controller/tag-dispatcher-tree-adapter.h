@@ -6,16 +6,19 @@
 #include <QAbstractItemModel>
 #include <QList>
 
-class TagCollectionTreeAdapter : public QAbstractItemModel
+#include <GUI/Tag/Dispatcher/Model/tag-dispatcher-model.h>
+#include <GUI/Tag/Dispatcher/Model/tag-dispatcher-item.h>
+
+class TagDispatcherTreeAdapter : public QAbstractItemModel
 {
 public:
-    TagCollectionTreeAdapter();
+    TagDispatcherTreeAdapter();
+    void InitDataSource(QList<TagDispatcherItem *> *dataSource);
 
     void beginResetModel();
     void endResetModel();
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-    QModelIndex indexByParth(QString path);
 
 private:
     QVariant data(const QModelIndex &index, int role) const;
@@ -23,7 +26,9 @@ private:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    int findRow(TagItem *tagItem) const;
+    int findRow(TagDispatcherItem *tagItem) const;
+
+    QList<TagDispatcherItem *> *dataSource = nullptr;
 };
 
 #endif // TAGCOLLECTIONTREEADAPTER_H

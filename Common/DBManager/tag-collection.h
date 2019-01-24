@@ -3,40 +3,41 @@
 
 #include <QString>
 #include <QList>
-#include <QDomDocument>
 
-struct TagCollection
+struct TagCollection;
+struct TagFolder;
+
+struct Tag
 {
-    QString fullFileName;
-    QString description;
+    QString name;
+
+    QString type;
+    QString data;
+
+    TagCollection *owner;
+    TagFolder *parent;
 };
 
 struct TagFolder
 {
-    QString description;
-};
-
-struct Tag
-{
-    QString type;
-    QString data;
-};
-
-//----------------------------
-
-struct TagItem
-{
     QString name;
-    QString path;
+    QString description;
 
-    TagCollection *collection = nullptr;
-    Tag *tag = nullptr;
-    TagFolder *folder = nullptr;
+    QList<TagFolder *> folders;
+    QList<Tag *> tags;
 
-    TagItem *parent = nullptr;
-    QList<TagItem *> subItems;
+    TagCollection *owner;
+    TagFolder *parent;
 
-    bool expanded;
+    ~TagFolder() {
+        foreach(Tag *tag, tags) { delete tag; }
+        foreach(TagFolder *folder, folders) { delete folder; }
+    }
+};
+
+struct TagCollection: TagFolder
+{
+    QString fullFileName;
 };
 
 #endif // TAGCOLLECTION_H

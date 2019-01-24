@@ -6,7 +6,7 @@
 
 //-- Variables -------------------------------------
 QHash<QString, ITagAdapter *> TagManager::tagAdapterCollection;
-QHash<QString, TagItem *> TagManager::tagCollections;
+QList<TagCollection *> TagManager::tagCollections;
 
 //-- Methods ---------------------------------------
 
@@ -54,26 +54,11 @@ void TagManager::Init()
 
 void TagManager::FreeResources()
 {
-    foreach(ITagAdapter *ta, TagManager::tagAdapterCollection) { delete ta; }
-    foreach(TagItem *ti, TagManager::tagCollections)
-    {
-        delete ti->collection;
-        FreeTagItem(ti);
-    }
+    foreach(ITagAdapter *tagAdapter, TagManager::tagAdapterCollection) { delete tagAdapter; }
+    foreach(TagCollection *tagCollection, TagManager::tagCollections) { delete tagCollection; }
 }
 
-void TagManager::FreeTagItem(TagItem *ti)
-{
-    if( ti->tag != nullptr) { delete ti->tag; }
-    if( ti->folder != nullptr) { delete ti->folder; }
-
-    foreach(TagItem *tsi, ti->subItems)
-    {
-        FreeTagItem(tsi);
-    }
-
-    delete ti;
-}
+//-- Tag Adapter methods ---------------------------
 
 QStringList TagManager::GetTagAdapterIDList()
 {
@@ -85,149 +70,157 @@ ITagAdapter *TagManager::GetTagAdapter(QString id)
     return TagManager::tagAdapterCollection.value(id);
 }
 
-int TagManager::GetTagCollectionCount()
-{
-    return tagCollections.count();
-}
-
-int TagManager::GetTagCollectionInd(QString name)
-{
-    return tagCollections.keys().indexOf(name);
-}
-
-TagItem *TagManager::GetTagCollection(int ind)
-{
-    QString key = tagCollections.keys().at(ind);
-    return tagCollections.value(key);
-}
-
-void TagManager::CreateTagCollection(QString fullFileName)
-{
-    TagItem *tagCollection = new TagItem();
-    tagCollection->collection = new TagCollection();
-
-    tagCollection->name = QFileInfo(fullFileName).baseName();
-    tagCollection->path = tagCollection->name;
-    tagCollection->collection->fullFileName = fullFileName;
-
-    tagCollections.insert(tagCollection->name, tagCollection);
-
-    DBManager::SaveTagCollection(tagCollection);
-}
+//-- Tag collection methods ------------------------
 
 void TagManager::LoadTagCollection(QString fullFileName)
 {
     if(QFileInfo(fullFileName).exists())
     {
-        TagItem *tagCollection = DBManager::GetTagCollection(fullFileName);
-        if(tagCollection != nullptr) { tagCollections.insert(tagCollection->name, tagCollection); }
+        TagCollection *tagCollection = DBManager::LoadTagCollection(fullFileName);
+        if(tagCollection != nullptr) { tagCollections.append(tagCollection); }
     }
 }
 
-void TagManager::SaveTagCollection(TagItem *tagCollection)
+void TagManager::SaveTagCollection(TagCollection *tagCollection)
 {
     DBManager::SaveTagCollection(tagCollection);
 }
 
-void TagManager::RemoveTagCollection(QString fullFileName)
+int TagManager::GetTagCollectionCount()
 {
-    tagCollections.remove(QFileInfo(fullFileName).baseName());
+    return tagCollections.count();
 }
 
-void TagManager::DeleteTagCollection(QString fullFileName)
+TagCollection *TagManager::GetTagCollection(int ind)
 {
-    tagCollections.remove(QFileInfo(fullFileName).baseName());
-    DBManager::DeleteTagCollection(fullFileName);
+    return tagCollections.at(ind);
 }
 
-TagItem *TagManager::CreateTagFolder(TagItem *parent, QString name)
+TagCollection *TagManager::NewTagCollection(QString fullFileName, QString description)
 {
-    TagItem *tagFolder = new TagItem();
-    tagFolder->folder = new TagFolder();
+    TagCollection *tagCollection = new TagCollection();
+
+    tagCollection->name = QFileInfo(fullFileName).baseName();
+    tagCollection->owner = tagCollection;
+    tagCollection->fullFileName = fullFileName;
+    tagCollection->description = description;
+
+    tagCollections.append(tagCollection);
+
+    DBManager::SaveTagCollection(tagCollection);
+
+    return tagCollection;
+}
+
+
+void TagManager::DeleteTagCollection(TagCollection *collection, bool isPermanently)
+{
+    tagCollections.removeOne(collection);
+    if(isPermanently) { DBManager::DeleteTagCollection(collection->fullFileName); }
+    delete collection;
+}
+
+TagFolder *TagManager::NewTagFolder(TagFolder *parent, QString name, QString description)
+{
+    TagFolder *tagFolder = new TagFolder();
 
     tagFolder->name = name;
-    tagFolder->collection = parent->collection;
-    tagFolder->expanded = false;
-    tagFolder->parent = parent;
-    tagFolder->path = parent->path + ":" + tagFolder->name;
+    tagFolder->owner = parent->owner;
+    tagFolder->description = description;
+    parent->folders.append(tagFolder);
 
-    parent->subItems.append(tagFolder);
-
-    TagItem *tagCollection = tagFolder;
-    while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
-
-    DBManager::SaveTagCollection(tagCollection);
+    DBManager::SaveTagCollection(tagFolder->owner);
 
     return tagFolder;
 }
 
-TagItem *TagManager::AddTag(TagItem *parent, QString tagType, QString tagName, QString tagData)
+void TagManager::DeleteTagFolder(TagFolder *folder)
 {
-    TagItem *tagItem = new TagItem();
-    tagItem->parent = parent;
-    tagItem->collection = parent->collection;
-    tagItem->name = tagName;
-    tagItem->path = parent->path + ":" + tagItem->name;
-
-    tagItem->tag = new Tag();
-    tagItem->tag->type = tagType;
-    tagItem->tag->data = tagData;
-
-    parent->subItems.append(tagItem);
-
-    TagItem *tagCollection = parent;
-    while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
-
-    DBManager::SaveTagCollection(tagCollection);
-
-    return tagItem;
+    folder->parent->folders.removeOne(folder);
+    DBManager::SaveTagCollection(folder->owner);
+    delete folder;
 }
 
-TagItem *TagManager::FindTagByPath(QString tagPath)
+Tag *TagManager::NewTag(TagFolder *parent, QString tagType, QString tagName, QString tagData)
 {
-    int p = tagPath.indexOf(':');
+    Tag *tag = new Tag();
+    tag->owner = parent->owner;
+    tag->parent = parent;
+    tag->name = tagName;
+    tag->type = tagType;
+    tag->data = tagData;
+
+    parent->tags.append(tag);
+
+    DBManager::SaveTagCollection(tag->owner);
+
+    return tag;
+}
+
+void TagManager::DeleteTag(Tag *tag)
+{
+    tag->parent->tags.removeOne(tag);
+    DBManager::SaveTagCollection(tag->owner);
+    delete tag;
+}
+
+QString TagManager::GetTagLink(Tag *tag)
+{
+    QString link = "";
+    TagFolder *parent = tag->parent;
+
+    while(parent->parent != nullptr) {
+        link = parent->name + "/" + link;
+        parent = parent->parent;
+    }
+
+    return parent->name + "://" + link + tag->name;
+}
+
+Tag *TagManager::getTagByLink(QString tagLink)
+{
+    int p = tagLink.indexOf(':');
     if(p < 0) { return nullptr; }
 
-    QString name = tagPath.left(p);
-    QString tail = tagPath.right(tagPath.length() - p - 1);
+    QString collectionName = tagLink.left(p);
+    QString tail = tagLink.mid(p + 3);
 
-    TagItem *tagItem = nullptr;
-    for(int i = 0; i < tagCollections.keys().length(); i++)
+    TagCollection *tagCollection = nullptr;
+    for(int i = 0; i < tagCollections.length(); i++)
     {
-        if(tagCollections.keys().at(i).compare(name, Qt::CaseInsensitive) == 0)
+        if(tagCollections.at(i)->name.compare(collectionName, Qt::CaseInsensitive) == 0)
         {
-            tagItem = tagCollections.value(tagCollections.keys().at(i));
+            tagCollection = tagCollections.at(i);
         }
     }
-    if(tagItem == nullptr) { return nullptr; }
 
-    while(p > 0)
+    if(tagCollection == nullptr) { return nullptr; }
+
+    QString folderName = "";
+    TagFolder *parentTagFolder = tagCollection;
+    while(tail.contains('/') && parentTagFolder != nullptr)
     {
-        p = tail.indexOf(':');
-        if(p >= 0)
-        {
-            name = tail.left(p);
-            tail = tail.right(tail.length() - p - 1);
-        }
-        else
-        {
-            name = tail;
-            tail = "";
-        }
-
-        bool isFound = false;
-        for(int i = 0; i < tagItem->subItems.length(); i++)
-        {
-            if(tagItem->subItems.at(i)->name.compare(name, Qt::CaseInsensitive) == 0)
-            {
-                tagItem = tagItem->subItems.at(i);
-                isFound = true;
-                break;
+        p = tail.indexOf('/');
+        folderName = tail.left(p);
+        tail = tail.mid(p + 1);
+        TagFolder *tagFolder = nullptr;
+        for(int i = 0; i < parentTagFolder->folders.length(); i++) {
+            if(parentTagFolder->folders.at(i)->name.compare(folderName, Qt::CaseInsensitive) == 0) {
+                tagFolder = parentTagFolder->folders.at(i);
             }
         }
-
-        if(!isFound) { return nullptr; }
+        parentTagFolder = tagFolder;
     }
 
-    return tagItem;
+    if(parentTagFolder == nullptr) { return nullptr; }
+
+    QString tagName = tail;
+    Tag *tag = nullptr;
+    for(int i = 0; i < parentTagFolder->tags.length(); i++) {
+        if(parentTagFolder->tags.at(i)->name.compare(tagName, Qt::CaseInsensitive) == 0) {
+            tag = parentTagFolder->tags.at(i);
+        }
+    }
+
+    return tag;
 }
