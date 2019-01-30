@@ -1,5 +1,5 @@
-#ifndef TAGVIEWFOLDERWIDGET_H
-#define TAGVIEWFOLDERWIDGET_H
+#ifndef TAGDISPATCHERFOLDERWIDGET_H
+#define TAGDISPATCHERFOLDERWIDGET_H
 
 #include <QWidget>
 
@@ -20,4 +20,4 @@ private:
     Ui::TagDispatcherFolderWidget *ui;
 };
 
-#endif // TAGVIEWFOLDERWIDGET_H
+#endif // TAGDISPATCHERFOLDERWIDGET_H

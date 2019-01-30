@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>TagViewCollectionWidget</class>
- <widget class="QWidget" name="TagViewCollectionWidget">
+ <class>TagDispatcherCollectionWidget</class>
+ <widget class="QWidget" name="TagDispatcherCollectionWidget">
   <property name="geometry">
    <rect>
     <x>0</x>

@@ -4,6 +4,8 @@
 #include <QString>
 #include <QColor>
 
+#include <../TTI/Common/itestcasetemplate.h>
+
 struct TestCompareResult
 {
     QString status;
@@ -24,12 +26,13 @@ struct TestResult
     TestCompareResult *benchmark = nullptr;
     TestCompareResult *previous = nullptr;
 
-    QString exitStatus;
+    ITestOutputComparator::ExitStatus exitStatus;
     int exitCode;
 
     qint64 execTimeMs;
 
     QString status;
+    QString comment;
     QColor color;
 };
 

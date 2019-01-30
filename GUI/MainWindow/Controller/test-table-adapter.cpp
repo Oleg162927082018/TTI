@@ -114,9 +114,9 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
             if(test->results.keys().contains(runNum)) {
 
                 if(test->status->benchmarks.contains(runNum)) {
-                    return QVariant("Benchmark updated");
+                    return QVariant(test->status->benchmarks.value(runNum).label + test->status->benchmarks.value(runNum).comment);
                 } else {
-                    return QVariant(test->results.value(runNum)->status);
+                    return QVariant(test->results.value(runNum)->status + test->results.value(runNum)->comment);
                 }
 
             } else { return QVariant(); }
@@ -137,9 +137,9 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
             if(test->results.keys().contains(runNum)) {
 
                 if(test->status->benchmarks.contains(runNum)) {
-                    return QVariant(QColor("#008080"));
+                    return QVariant(QBrush(test->status->benchmarks.value(runNum).color));
                 } else {
-                    return QBrush(test->results.value(runNum)->color);
+                    return QVariant(QBrush(test->results.value(runNum)->color));
                 }
             }
             else { return QVariant(); }

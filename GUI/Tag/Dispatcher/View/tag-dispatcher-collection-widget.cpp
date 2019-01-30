@@ -1,5 +1,5 @@
 #include "tag-dispatcher-collection-widget.h"
-#include "ui_tag-view-collection-widget.h"
+#include "ui_tag-dispatcher-collection-widget.h"
 
 TagDispatcherCollectionWidget::TagDispatcherCollectionWidget(QWidget *parent) :
     QWidget(parent),

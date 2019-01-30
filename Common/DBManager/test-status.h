@@ -4,11 +4,16 @@
 #include <QtXml/QDomDocument>
 #include <QStringList>
 #include <QMap>
+#include <QColor>
 
 struct BenchmarkInfo
 {
     QString status;
     QString outMark;
+
+    QString label;
+    QString comment;
+    QColor color;
 };
 
 struct TestStatus

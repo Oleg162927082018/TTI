@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>TagViewUnknownWidget</class>
- <widget class="QWidget" name="TagViewUnknownWidget">
+ <class>TagDispatcherUnknownWidget</class>
+ <widget class="QWidget" name="TagDispatcherUnknownWidget">
   <property name="geometry">
    <rect>
     <x>0</x>

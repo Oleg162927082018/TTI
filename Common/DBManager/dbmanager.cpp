@@ -6,6 +6,8 @@
 #include <QTextStream>
 #include <QDateTime>
 
+#include <../TTI/Common/itestcasetemplate.h>
+
 QString DBManager::GetRunName(int runNum)
 {
     return QString("%1").arg(runNum, 8, 10,  QLatin1Char('0'));
@@ -378,6 +380,15 @@ TestStatus *DBManager::GetTestStatus(QString testCaseFullFileName, QString testR
                     benchmarkInfo.status = benchmarkElement.attribute("status");
                     int runNum = benchmarkElement.attribute("run").toInt();
                     benchmarkInfo.outMark = benchmarkElement.attribute("out");
+
+                    QDomElement labelElement = benchmarkElement.firstChildElement("label");
+                    benchmarkInfo.label = labelElement.text();
+
+                    QDomElement commentElement = benchmarkElement.firstChildElement("comment");
+                    benchmarkInfo.comment = commentElement.text();
+
+                    QDomElement colorElement = benchmarkElement.firstChildElement("color");
+                    benchmarkInfo.color = QColor(colorElement.text());
                     status->benchmarks.insert(runNum, benchmarkInfo);
 
                     benchmarkElement = benchmarkElement.nextSiblingElement("benchmark");
@@ -432,6 +443,27 @@ void DBManager::SaveTestStatus(QString testCaseFullFileName, TestStatus *ts)
         benchmarkElement.setAttribute("run", GetRunName(key));
         benchmarkElement.setAttribute("out", ts->benchmarks.value(key).outMark);
         benchmarkElement.setAttribute("status", ts->benchmarks.value(key).status);
+
+        //Status
+        QDomElement labelElement = doc.createElement("label");
+        benchmarkElement.appendChild(labelElement);
+
+        QDomText statusValue = doc.createTextNode(ts->benchmarks.value(key).label);
+        labelElement.appendChild(statusValue);
+
+        //Comment
+        QDomElement commentElement = doc.createElement("comment");
+        benchmarkElement.appendChild(commentElement);
+
+        QDomText commentValue = doc.createTextNode(ts->benchmarks.value(key).comment);
+        commentElement.appendChild(commentValue);
+
+        //Color
+        QDomElement colorElement = doc.createElement("color");
+        benchmarkElement.appendChild(colorElement);
+
+        QDomText colorValue = doc.createTextNode(ts->benchmarks.value(key).color.name());
+        colorElement.appendChild(colorValue);
     }
 
     //Tags
@@ -496,11 +528,31 @@ TestResult *DBManager::GetTestResult(QString testCaseFullFileName, QString relat
                 }
 
                 QDomElement exitElement = rootElement.firstChildElement("exit-code");
-                result->exitStatus = exitElement.attribute("status");
                 result->exitCode = exitElement.text().toInt();
+
+                QString exitStatusStr = exitElement.attribute("status");
+                if(exitStatusStr == "not-started") {
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::NOT_STARTED;
+
+                } else if(exitStatusStr == "timeout-expired") {
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::TIMEOUT_EXPIRED;
+
+                } else if(exitStatusStr == "exit-code") {
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::EXIT_CODE;
+
+                } else { //if(exitStatusStr == "completed")
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::COMPLETED;
+                }
 
                 QDomElement statusElement = rootElement.firstChildElement("test-status");
                 result->status = statusElement.text();
+
+                QDomElement commentElement = rootElement.firstChildElement("comment");
+                result->comment = commentElement.text();
 
                 QDomElement colorElement = rootElement.firstChildElement("test-color");
                 result->color = QColor(colorElement.text());
@@ -716,8 +768,23 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
 
     QDomText exitCodeValue = doc.createTextNode(QString::number(tr->exitCode));
     exitCodeElement.appendChild(exitCodeValue);
+    switch(tr->exitStatus) {
+        case ITestOutputComparator::ExitStatus::NOT_STARTED:
+            exitCodeElement.setAttribute("status", "not-started");
+            break;
 
-    exitCodeElement.setAttribute("status", tr->exitStatus);
+        case ITestOutputComparator::ExitStatus::TIMEOUT_EXPIRED:
+            exitCodeElement.setAttribute("status", "timeout-expired");
+            break;
+
+        case ITestOutputComparator::ExitStatus::EXIT_CODE:
+            exitCodeElement.setAttribute("status", "exit-code");
+            break;
+
+        default: //ITestOutputComparator::ExitStatus::COMPLETED
+            exitCodeElement.setAttribute("status", "completed");
+            break;
+    }
 
     //Exec time
     QDomElement exeTimeElement = doc.createElement("exec-time-ms");
@@ -732,6 +799,13 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
 
     QDomText statusValue = doc.createTextNode(tr->status);
     statusElement.appendChild(statusValue);
+
+    //Comment
+    QDomElement commentElement = doc.createElement("comment");
+    rootNode.appendChild(commentElement);
+
+    QDomText commentValue = doc.createTextNode(tr->comment);
+    commentElement.appendChild(commentValue);
 
     //Color
     QDomElement colorElement = doc.createElement("test-color");

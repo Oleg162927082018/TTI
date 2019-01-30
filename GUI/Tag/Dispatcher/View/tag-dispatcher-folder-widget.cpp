@@ -1,5 +1,5 @@
 #include "tag-dispatcher-folder-widget.h"
-#include "ui_tag-view-folder-widget.h"
+#include "ui_tag-dispatcher-folder-widget.h"
 
 TagDispatcherFolderWidget::TagDispatcherFolderWidget(QWidget *parent) :
     QWidget(parent),

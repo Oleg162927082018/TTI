@@ -1,5 +1,5 @@
 #include "tag-dispatcher-unknown-widget.h"
-#include "ui_tag-view-unknown-widget.h"
+#include "ui_tag-dispatcher-unknown-widget.h"
 
 TagDispatcherUnknownWidget::TagDispatcherUnknownWidget(QWidget *parent) :
     QWidget(parent),

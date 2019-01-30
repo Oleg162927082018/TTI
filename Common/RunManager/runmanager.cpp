@@ -497,6 +497,15 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
         benchmarkInfo.status = "thebest";
         benchmarkInfo.outMark = testInfo->testResult.outMark;
 
+        int outStatusIndex;
+        QString testStatusDescription;
+        testInfo->comparator->CalculateStatusIndex(testInfo->testResult.exitStatus, testInfo->testResult.exitCode, testInfo->testResult.execTimeMs,
+                   testInfo->consoleOutput, testInfo->outputFullFolderName, nullptr, nullptr,
+                   ITestOutputComparator::BenchmarkStatus::THE_BEST_BENCHMARK_CREATED,
+                   outStatusIndex, benchmarkInfo.comment);
+
+        testInfo->comparator->GetTestStatus(outStatusIndex, benchmarkInfo.label, benchmarkInfo.color, testStatusDescription);
+
         TestStatus *ts = DBManager::GetTestStatus(plan->processedTestCaseFullFileName, testInfo->testName);
         if(ts != nullptr)
         {

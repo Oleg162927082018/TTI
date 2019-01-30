@@ -364,8 +364,9 @@ void MainWindow::updateComparePanel(int index, QComboBox *compareComboBox, QPlai
 
     if((testResult != nullptr) && (testItem != nullptr) && (runNum > 0)){
         if(testItem->status->benchmarks.contains(runNum)) {
-            infoLabel->setStyleSheet("background-color: #008080");
-            infoLabel->setText("Benchmark updated");
+            BenchmarkInfo benchmark = testItem->status->benchmarks.value(runNum);
+            infoLabel->setStyleSheet("background-color: " + benchmark.color.name());
+            infoLabel->setText(benchmark.label + benchmark.comment);
         } else {
             infoLabel->setStyleSheet("background-color: " + testResult->color.name());
             infoLabel->setText(testResult->status);

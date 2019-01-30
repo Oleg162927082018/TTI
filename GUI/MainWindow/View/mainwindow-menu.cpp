@@ -233,6 +233,40 @@ void MainWindow::updateTestStatus(int runNum, QString newStatus, bool checked)
 
             currentTestBenchmarks[runNum].status = newStatus;
 
+            ITestOutputComparator::BenchmarkStatus newCompareBenchmarkStatus;
+            if(currentTestBenchmarks.keys().at(0) == runNum) {
+                if(newStatus.compare("thebest") == 0) {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::THE_BEST_BENCHMARK_CREATED;
+                } else {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::PERFECT_BENCHMARK_CREATED;
+                }
+            } else {
+                if(newStatus.compare("thebest") == 0) {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::THE_BEST_BENCHMARK_UPDATED;
+                } else {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::PERFECT_BENCHMARK_UPDATED;
+                }
+            }
+
+            TestResult *tr = testItem->results.value(runNum);
+
+            int *benchmarkCompare = nullptr;
+            if(tr->benchmark != nullptr) { benchmarkCompare = new int(tr->benchmark->compareResult); }
+            int *previousCompare = nullptr;
+            if(tr->previous != nullptr) { previousCompare = new int(tr->previous->compareResult); }
+
+            QByteArray consoleLog = DBManager::GetConsoleLog(testItem->ownerTestCase->fullFileName, testItem->status->relativeFileName, tr->outMark);
+
+            int outStatusIndex;
+            QString testStatusDescription;
+            ITestOutputComparator *comparator = DLLManager::GetTestCaseComparator(testItem->ownerTestCase->ID);
+            comparator->CalculateStatusIndex(tr->exitStatus, tr->exitCode, tr->execTimeMs,
+                       QStringList(consoleLog), DBManager::GetOutFolder(testItem->ownerTestCase->fullFileName, testItem->status->relativeFileName, tr->outMark),
+                       benchmarkCompare, previousCompare, newCompareBenchmarkStatus,
+                       outStatusIndex, currentTestBenchmarks[runNum].comment);
+
+            comparator->GetTestStatus(outStatusIndex, currentTestBenchmarks[runNum].label, currentTestBenchmarks[runNum].color, testStatusDescription);
+
             MainWindowModel::testTableAdapter.endResetModel();
             ui->testTableView->setCurrentIndex(tableInd);
         }
@@ -243,6 +277,40 @@ void MainWindow::updateTestStatus(int runNum, QString newStatus, bool checked)
 
             benchmarkInfo.outMark = testItem->results.value(runNum)->outMark;
             benchmarkInfo.status = newStatus;
+
+            ITestOutputComparator::BenchmarkStatus newCompareBenchmarkStatus;
+            if((currentTestBenchmarks.size() == 0) || (currentTestBenchmarks.keys().at(0) > runNum)) {
+                if(newStatus.compare("thebest") == 0) {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::THE_BEST_BENCHMARK_CREATED;
+                } else {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::PERFECT_BENCHMARK_CREATED;
+                }
+            } else {
+                if(newStatus.compare("thebest") == 0) {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::THE_BEST_BENCHMARK_UPDATED;
+                } else {
+                    newCompareBenchmarkStatus = ITestOutputComparator::BenchmarkStatus::PERFECT_BENCHMARK_UPDATED;
+                }
+            }
+
+            TestResult *tr = testItem->results.value(runNum);
+
+            int *benchmarkCompare = nullptr;
+            if(tr->benchmark != nullptr) { benchmarkCompare = new int(tr->benchmark->compareResult); }
+            int *previousCompare = nullptr;
+            if(tr->previous != nullptr) { previousCompare = new int(tr->previous->compareResult); }
+
+            QByteArray consoleLog = DBManager::GetConsoleLog(testItem->ownerTestCase->fullFileName, testItem->status->relativeFileName, tr->outMark);
+
+            int outStatusIndex;
+            QString testStatusDescription;
+            ITestOutputComparator *comparator = DLLManager::GetTestCaseComparator(testItem->ownerTestCase->ID);
+            comparator->CalculateStatusIndex(tr->exitStatus, tr->exitCode, tr->execTimeMs,
+                       QStringList(consoleLog), DBManager::GetOutFolder(testItem->ownerTestCase->fullFileName, testItem->status->relativeFileName, tr->outMark),
+                       benchmarkCompare, previousCompare, newCompareBenchmarkStatus,
+                       outStatusIndex, benchmarkInfo.comment);
+
+            comparator->GetTestStatus(outStatusIndex, benchmarkInfo.label, benchmarkInfo.color, testStatusDescription);
 
             QModelIndex tableInd = ui->testTableView->currentIndex();
             MainWindowModel::testTableAdapter.beginResetModel();

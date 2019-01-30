@@ -3,16 +3,27 @@
 
 #include <QString>
 #include <QWidget>
-#include <QMap>
 #include <QColor>
 #include <QtCore/qglobal.h>
+
 
 // Class comparator need because it send to another threads
 class ITestOutputComparator
 {
 public:
+    enum BenchmarkStatus { PERFECT_BENCHMARK_CREATED, THE_BEST_BENCHMARK_CREATED, PERFECT_BENCHMARK_UPDATED, THE_BEST_BENCHMARK_UPDATED, NO_BENCHMARK };
+    enum ExitStatus { NOT_STARTED, EXIT_CODE, TIMEOUT_EXPIRED, COMPLETED };
+
     virtual ~ITestOutputComparator() { }
 
+    //Return true if TestStatus exist and false if does not exist
+    virtual bool GetTestStatus(int status_index, QString &out_label, QColor &out_color, QString &out_description) = 0;
+
+    virtual void CalculateStatusIndex(ExitStatus exitStatus, int exitCode, qint64 exeTimeMs,
+                                      QStringList consoleOutput, QString outputFullFolderName,
+                                      int *benchmarkCompareResult, int *previousCompareResult,
+                                      BenchmarkStatus benchmarkStatus,
+                                      int &out_status_index, QString &out_comment) = 0;
     //benchmarkCompareResult
     // == 0 if benchmark equal current result
     // > 0  if benchmark not equal current result, value is a metrics
@@ -21,10 +32,6 @@ public:
     // == 0 if previous equal current result
     // > 0  if previous not equal current result, value is a metrics
     // == -1 if previous not found
-    virtual void CalculateStatus(QStringList consoleOutput, QString outputFullFolderName,
-                                 int exitCode, qint64 exeTimeMs,
-                                 int *benchmarkCompareResult, int *previousCompareResult,
-                                 QString &out_status, QColor &out_color) = 0;
     virtual int Compare(QString outputFullFolderName1, QString outputFullFolderName2) = 0;
 };
 

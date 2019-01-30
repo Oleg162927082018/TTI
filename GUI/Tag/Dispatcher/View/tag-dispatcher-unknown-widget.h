@@ -1,5 +1,5 @@
-#ifndef TAGUNKNOWNWIDGET_H
-#define TAGUNKNOWNWIDGET_H
+#ifndef TAGDISPATCHERUNKNOWNWIDGET_H
+#define TAGDISPATCHERUNKNOWNWIDGET_H
 
 #include <QWidget>
 
@@ -19,4 +19,4 @@ private:
     Ui::TagDispatcherUnknownWidget *ui;
 };
 
-#endif // TAGUNKNOWNWIDGET_H
+#endif // TAGDISPATCHERUNKNOWNWIDGET_H
