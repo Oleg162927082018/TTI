@@ -116,7 +116,7 @@ QVariant TestTableAdapter::data(const QModelIndex &index, int role) const
                 if(test->status->benchmarks.contains(runNum)) {
                     return QVariant(test->status->benchmarks.value(runNum).label + test->status->benchmarks.value(runNum).comment);
                 } else {
-                    return QVariant(test->results.value(runNum)->status + test->results.value(runNum)->comment);
+                    return QVariant(test->results.value(runNum)->label + test->results.value(runNum)->comment);
                 }
 
             } else { return QVariant(); }

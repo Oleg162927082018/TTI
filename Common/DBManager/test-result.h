@@ -31,7 +31,7 @@ struct TestResult
 
     qint64 execTimeMs;
 
-    QString status;
+    QString label;
     QString comment;
     QColor color;
 };

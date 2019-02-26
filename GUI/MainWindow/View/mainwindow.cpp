@@ -369,7 +369,7 @@ void MainWindow::updateComparePanel(int index, QComboBox *compareComboBox, QPlai
             infoLabel->setText(benchmark.label + benchmark.comment);
         } else {
             infoLabel->setStyleSheet("background-color: " + testResult->color.name());
-            infoLabel->setText(testResult->status);
+            infoLabel->setText(testResult->label);
         }
     } else {
         infoLabel->setStyleSheet("");

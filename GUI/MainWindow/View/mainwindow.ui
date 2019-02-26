@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Total Test Integrator 2.1</string>
+   <string>Total Test Integrator 2.4</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="enabled">
@@ -79,12 +79,9 @@
          <property name="editTriggers">
           <set>QAbstractItemView::NoEditTriggers</set>
          </property>
-         <property name="sortingEnabled">
-          <bool>true</bool>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SingleSelection</enum>
          </property>
-         <attribute name="verticalHeaderShowSortIndicator" stdset="0">
-          <bool>true</bool>
-         </attribute>
         </widget>
         <widget class="QWidget" name="compareWidget" native="true">
          <property name="sizePolicy">

@@ -4,6 +4,8 @@
 #include "set-filter-tag-collection-widget.h"
 #include "ui_set-filter-dialog.h"
 
+#include <QMessageBox>
+
 SetFilterDialog::SetFilterDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SetFilterDialog)
@@ -50,6 +52,20 @@ SetFilterDialog::SetFilterDialog(QWidget *parent) :
 
     QModelIndex firstTagIndex = tagCollectionTreeAdapter.index(0,0);
     ui->tagTreeView->setCurrentIndex(firstTagIndex);
+
+    testCaseListAdapter.Init(&(model.statusCollectionList));
+    ui->testCaseListView->setModel(&testCaseListAdapter);
+
+    statusTableAdapter.InitHeaderCollection(&headerCollection);
+    statusTableAdapter.InitStatusCollection(nullptr);
+    ui->statusTableView->setModel(&statusTableAdapter);
+
+    connect(ui->testCaseListView->selectionModel(),
+          SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
+          this, SLOT(on_testCaseListSelectionChanged(QItemSelection, QItemSelection)));
+
+    connect(ui->statusTableView->horizontalHeader(), SIGNAL(sectionClicked(int)),
+            this, SLOT(on_statusTableHeaderClicked(int)));
 }
 
 SetFilterDialog::~SetFilterDialog()
@@ -57,6 +73,17 @@ SetFilterDialog::~SetFilterDialog()
     delete ui;
 
     if(checkedTagLinks != nullptr) { delete checkedTagLinks; }
+}
+
+void SetFilterDialog::appendUpdateTestCase(TestCase *tc)
+{
+    model.appendUpdateTestCase(tc);
+
+    QModelIndex tcIndex = ui->testCaseListView->currentIndex();
+    if(!tcIndex.isValid()) {
+        tcIndex = testCaseListAdapter.index(0);
+        ui->testCaseListView->setCurrentIndex(tcIndex);
+    }
 }
 
 void SetFilterDialog::checkEqualCondition(int equalIndex, int equalResult, int equalValue, bool &isCondition)
@@ -120,6 +147,9 @@ bool SetFilterDialog::isCondition(MainWindowTableItem *item)
     bool isTagChecked = (ui->tagCheckBox->checkState() == Qt::Checked);
     bool isTagCondition = false;
 
+    bool isStatusChecked = (ui->statusCheckBox->checkState() == Qt::Checked);
+    bool isStatusCondition = false;
+
     int visHeaderCount = item->visibleTableHeaders->count();
     for(int i = 1; i <= qMin(ui->deepSpinBox->value(), visHeaderCount); i++) {
 
@@ -145,8 +175,33 @@ bool SetFilterDialog::isCondition(MainWindowTableItem *item)
                                 ui->diffPreviousSpinBox->value(), isPreviousCondition); }
 
         if((isChangedChecked) && (result != nullptr) && (previous != nullptr)) {
-            if((result->color != previous->color) || (result->status.compare(previous->status) != 0)) {
+            if((result->color != previous->color) || (result->label.compare(previous->label) != 0)) {
                 isChangedCondition = true;
+            }
+        }
+
+        if((isStatusChecked) && (result != nullptr)) {
+            int collectionInd = model.testCaseFileNameList.indexOf(item->ownerTestCase->fullFileName);
+            SetFilterStatusCollection *filterCollection = model.statusCollectionList.at(collectionInd);
+
+            QString label;
+            QColor color;
+            if(item->status->benchmarks.keys().contains(resultKey)) {
+                BenchmarkInfo info = item->status->benchmarks.value(resultKey);
+                label = info.label;
+                color = info.color;
+            } else {
+                label = result->label;
+                color = result->color;
+            }
+
+            if(collectionInd >= 0) {
+                foreach(SetFilterStatusItem *filterItem, filterCollection->statuses) {
+                    if((filterItem->label.compare(label) == 0) && (filterItem->color == color)) {
+                        if(filterItem->checked) { isStatusCondition = true; }
+                        break;
+                    }
+                }
             }
         }
     }
@@ -170,6 +225,7 @@ bool SetFilterDialog::isCondition(MainWindowTableItem *item)
     if(isTheBestChecked) { appendCondition(ui->diffTheBestOrAndBox->currentText(), isTheBestCondition, summaryCondition); }
     if(isPreviousChecked) { appendCondition(ui->diffPreviousOrAndBox->currentText(), isPreviousCondition, summaryCondition); }
     if(isTagChecked) { appendCondition(ui->tagOrAndBox->currentText(), isTagCondition, summaryCondition); }
+    if(isStatusChecked) { appendCondition(ui->statusOrAndBox->currentText(), isStatusCondition, summaryCondition); }
 
     return summaryCondition;
 }
@@ -218,6 +274,7 @@ void SetFilterDialog::on_statusCheckBox_clicked(bool checked)
 {
     ui->statusOrAndBox->setEnabled(checked);
     ui->statusTableView->setEnabled(checked);
+    ui->testCaseListView->setEnabled(checked);
 }
 
 void SetFilterDialog::on_changedCheckBox_clicked(bool checked)
@@ -269,5 +326,23 @@ void SetFilterDialog::on_SetFilterDialog_accepted()
     if(checkedTagLinks != nullptr) {
         delete checkedTagLinks;
         checkedTagLinks = nullptr;
+    }
+}
+
+void SetFilterDialog::on_testCaseListSelectionChanged(const QItemSelection &newSelection, const QItemSelection &oldSelection)
+{
+    statusTableAdapter.beginResetModel();
+
+    QModelIndex testCaseIndex = newSelection.at(0).indexes().at(0);
+    statusTableAdapter.InitStatusCollection(model.statusCollectionList.at(testCaseIndex.row()));
+
+    statusTableAdapter.endResetModel();
+}
+
+void SetFilterDialog::on_statusTableHeaderClicked(int arg1)
+{
+    if(arg1 == 0)
+    {
+        statusTableAdapter.changeCheckState();
     }
 }

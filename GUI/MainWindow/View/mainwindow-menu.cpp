@@ -276,7 +276,7 @@ void MainWindow::updateTestStatus(int runNum, QString newStatus, bool checked)
             BenchmarkInfo benchmarkInfo;
 
             benchmarkInfo.outMark = testItem->results.value(runNum)->outMark;
-            benchmarkInfo.status = newStatus;
+            benchmarkInfo.label = newStatus;
 
             ITestOutputComparator::BenchmarkStatus newCompareBenchmarkStatus;
             if((currentTestBenchmarks.size() == 0) || (currentTestBenchmarks.keys().at(0) > runNum)) {
@@ -485,6 +485,9 @@ void MainWindow::on_actionIndexHelp_triggered()
 void MainWindow::on_actionSet_Filter_triggered()
 {
     if(filterDlg == nullptr) { filterDlg = new SetFilterDialog(this); }
+    foreach(MainWindowTreeFolder *tf, MainWindowModel::tree) {
+        filterDlg->appendUpdateTestCase(tf->ownerTestCase);
+    }
     filterDlg->exec();
 
     QModelIndex currIndex = ui->testTableView->currentIndex();

@@ -448,8 +448,8 @@ void DBManager::SaveTestStatus(QString testCaseFullFileName, TestStatus *ts)
         QDomElement labelElement = doc.createElement("label");
         benchmarkElement.appendChild(labelElement);
 
-        QDomText statusValue = doc.createTextNode(ts->benchmarks.value(key).label);
-        labelElement.appendChild(statusValue);
+        QDomText labelValue = doc.createTextNode(ts->benchmarks.value(key).label);
+        labelElement.appendChild(labelValue);
 
         //Comment
         QDomElement commentElement = doc.createElement("comment");
@@ -549,7 +549,7 @@ TestResult *DBManager::GetTestResult(QString testCaseFullFileName, QString relat
                 }
 
                 QDomElement statusElement = rootElement.firstChildElement("test-status");
-                result->status = statusElement.text();
+                result->label = statusElement.text();
 
                 QDomElement commentElement = rootElement.firstChildElement("comment");
                 result->comment = commentElement.text();
@@ -797,7 +797,7 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
     QDomElement statusElement = doc.createElement("test-status");
     rootNode.appendChild(statusElement);
 
-    QDomText statusValue = doc.createTextNode(tr->status);
+    QDomText statusValue = doc.createTextNode(tr->label);
     statusElement.appendChild(statusValue);
 
     //Comment

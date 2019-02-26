@@ -518,7 +518,7 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
     DBManager::SaveTestResult(plan->processedTestCaseFullFileName, plan->processedTestCaseRunName,
                               testInfo->testName, &(testInfo->testResult));
 
-    QString statisticsKey = testInfo->testResult.status + " " + testInfo->testResult.color.name();
+    QString statisticsKey = testInfo->testResult.label + " " + testInfo->testResult.color.name();
     plan->processedTestCaseStatistics[statisticsKey] = plan->processedTestCaseStatistics[statisticsKey] + 1;
 }
 

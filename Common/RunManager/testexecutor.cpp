@@ -81,7 +81,7 @@ void TestExecutor::run()
                     info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                     outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         goto theEnd;
     }
@@ -116,7 +116,7 @@ void TestExecutor::run()
                     info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                     outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         goto theEnd;
     }
@@ -148,7 +148,7 @@ void TestExecutor::run()
                    info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                    outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
 
@@ -178,7 +178,7 @@ void TestExecutor::run()
                    info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                    outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
 
@@ -215,7 +215,7 @@ void TestExecutor::run()
                    info->consoleOutput, info->outputFullFolderName, benchmarkCompare, prevCompare, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                    outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         if(benchmarkCompare != nullptr) { delete benchmarkCompare; }
         if(prevCompare != nullptr) { delete prevCompare; }
@@ -259,7 +259,7 @@ void TestExecutor::run()
                    info->consoleOutput, info->outputFullFolderName, benchmarkCompare, prevCompare, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                    outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         if(benchmarkCompare != nullptr) { delete benchmarkCompare; }
         if(prevCompare != nullptr) { delete prevCompare; }
@@ -297,7 +297,7 @@ void TestExecutor::run()
                    info->consoleOutput, info->outputFullFolderName, benchmarkCompare, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
                    outStatusIndex, info->testResult.comment);
 
-        info->comparator->GetTestStatus(outStatusIndex, info->testResult.status, info->testResult.color, testStatusDescription);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
         if(benchmarkCompare != nullptr) { delete benchmarkCompare; }
 

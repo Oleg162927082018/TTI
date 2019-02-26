@@ -1,5 +1,6 @@
 #include "set-filter-dialog-model.h"
 
+#include "Common/DllManager/dllmanager.h"
 #include <TagManager/tagmanager.h>
 
 SetFilterDialogModel::SetFilterDialogModel()
@@ -10,6 +11,11 @@ SetFilterDialogModel::SetFilterDialogModel()
 SetFilterDialogModel::~SetFilterDialogModel()
 {
     foreach(SetFilterTagItem *item, tagCollections) { delete item; }
+
+    foreach(SetFilterStatusCollection *statusCollection, statusCollectionList) {
+        foreach(SetFilterStatusItem *item, statusCollection->statuses) { delete item; }
+        delete statusCollection;
+    }
 }
 
 void SetFilterDialogModel::Init()
@@ -29,6 +35,65 @@ QStringList *SetFilterDialogModel::getCheckedTagLinks()
     QStringList *checkedTagLinks = new QStringList();
     foreach(SetFilterTagItem *item, tagCollections) { getCheckedTagLinks(item, checkedTagLinks);  }
     return checkedTagLinks;
+}
+
+void SetFilterDialogModel::appendUpdateTestCase(TestCase *tc)
+{
+    const int MAX_STATUS_COUNT = 9999;
+
+    ITestOutputComparator *tcComparator = nullptr;
+    ITestCaseAdapter *tcAdapter = DLLManager::GetTestCaseAdapter(tc->ID);
+    if(tcAdapter != nullptr) { tcComparator = tcAdapter->GetComparator(); }
+
+    SetFilterStatusCollection *item = nullptr;
+
+    int ind = testCaseFileNameList.indexOf(tc->fullFileName);
+    if(ind < 0) {
+        testCaseFileNameList.append(tc->fullFileName);
+        item = new SetFilterStatusCollection();
+        statusCollectionList.append(item);
+
+        if(tcComparator != nullptr) {
+            for(int i = 0; i < MAX_STATUS_COUNT; i++) {
+                SetFilterStatusItem *status = new SetFilterStatusItem();
+                if(tcComparator->GetTestStatus(i, status->label, status->color, status->description)) {
+                    item->statuses.append(status);
+                } else {
+                    delete status;
+                    break;
+                }
+            }
+        }
+    } else {
+        item = statusCollectionList[ind];
+        int i;
+
+        if(tcComparator != nullptr) {
+
+            SetFilterStatusItem *status;
+            for(i = 0; i < MAX_STATUS_COUNT; i++) {
+                if(i < item->statuses.length()) {
+                    status = item->statuses[i];
+                } else {
+                    status = new SetFilterStatusItem();
+                    item->statuses.append(status);
+                }
+
+                if(!tcComparator->GetTestStatus(i, status->label, status->color, status->description)) {
+                    break;
+                }
+            }
+        }
+
+        while(i >= item->statuses.length())
+        {
+            delete item->statuses.last();
+            item->statuses.removeLast();
+        }
+    }
+
+    item->name = tc->fullFileName.mid(tc->fullFileName.lastIndexOf("/") + 1);
+
 }
 
 void SetFilterDialogModel::getCheckedTagLinks(SetFilterTagItem *tagItem, QStringList *checkedTagLinks)

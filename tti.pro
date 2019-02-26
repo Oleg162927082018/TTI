@@ -61,7 +61,9 @@ SOURCES += main.cpp\
     GUI/Tag/Dispatcher/View/tag-dispatcher-unknown-widget.cpp \
     GUI/Tag/Create/View/tag-folder-create-dialog.cpp \
     GUI/Tag/Create/View/tag-collection-create-dialog.cpp \
-    GUI/Search/Controller/set-filter-tag-tree-adapter.cpp
+    GUI/Search/Controller/set-filter-tag-tree-adapter.cpp \
+    GUI/Search/Controller/set-filter-testcase-list-adapter.cpp \
+    GUI/Search/Controller/set-filter-status-table-adapter.cpp
 
 HEADERS  += GUI/MainWindow/View/mainwindow.h \
     Common/itestcasetemplate.h \
@@ -127,7 +129,10 @@ HEADERS  += GUI/MainWindow/View/mainwindow.h \
     GUI/Tag/Dispatcher/View/tag-dispatcher-unknown-widget.h \
     GUI/Tag/Create/View/tag-folder-create-dialog.h \
     GUI/Tag/Create/View/tag-collection-create-dialog.h \
-    GUI/Search/Controller/set-filter-tag-tree-adapter.h
+    GUI/Search/Controller/set-filter-tag-tree-adapter.h \
+    GUI/Search/Model/set-filter-status-collection.h \
+    GUI/Search/Controller/set-filter-testcase-list-adapter.h \
+    GUI/Search/Controller/set-filter-status-table-adapter.h
 
 FORMS    += GUI/MainWindow/View/mainwindow.ui \
     GUI/Run/PlanDispatcher-New/View/plan-new-testcase-override-widget.ui \
