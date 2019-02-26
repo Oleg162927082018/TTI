@@ -7,44 +7,52 @@
 
 class TagManager
 {
+
 public:
     static void Init();
     static void FreeResources();
-    static void FreeTagItem(TagItem *ti);
+private:
+    static void FreeTagFolder(TagFolder *folder);
 
-    //Adapter methods
+//Adapter methods
+public:
     static QStringList GetTagAdapterIDList();
     static ITagAdapter *GetTagAdapter(QString id);
 
-    //Collection methods
+//Collection methods
+public:
     static int GetTagCollectionCount();
-    static int GetTagCollectionInd(QString name);
-    static TagItem *GetTagCollection(int ind);
+    static TagCollection *GetTagCollection(int ind);
 
-    static void CreateTagCollection(QString fullFileName);
+    static TagCollection *NewTagCollection(QString fullFileName, QString description);
+    static void DeleteTagCollection(TagCollection *collection, bool isPermanently);
+
+private:
     static void LoadTagCollection(QString fullFileName);
-    static void SaveTagCollection(TagItem *tagCollection);
-    static void RemoveTagCollection(QString fullFileName);
-    static void DeleteTagCollection(QString fullFileName);
+    static void SaveTagCollection(TagCollection *tagCollection);
 
-    //Folder methods
-    static TagItem *CreateTagFolder(TagItem *parent, QString name);
-    /*static void EditTagFolder(QString fullFileNameCollection, QString oldFolderName, QString newFolderName);
-    static void DeleteTagFolder(QString fullFileNameCollection, QString folderName);*/
+//Folder methods
+public:
+    static TagFolder *NewTagFolder(TagFolder *parent, QString name, QString description);
+    /*static void EditTagFolder(QString fullFileNameCollection, QString oldFolderName, QString newFolderName);*/
+    static void DeleteTagFolder(TagFolder *folder);
 
-    //Tag methods
-    static TagItem *AddTag(TagItem *parent, QString tagType, QString tagName, QString tagData);
-    /*static void EditTag(QString fullFileNameCollection, QString tagTemplateID, QString tagID, QString newTagName, QDomDocument newTagData);
-    static void DeleteTag(QString fullFileNameCollection, QString tagID);*/
-    static TagItem *FindTagByPath(QString tagPath);
+//Tag methods
+public:
+    static Tag *NewTag(TagFolder *parent, QString tagType, QString tagName, QString tagData);
+    /*static void EditTag(QString fullFileNameCollection, QString tagTemplateID, QString tagID, QString newTagName, QDomDocument newTagData);*/
+    static void DeleteTag(Tag *tag);
+
+    static Tag *getTagByLink(QString tagLink);
+    static QString GetTagLink(Tag *tag);
 
 private:
     static QHash<QString, ITagAdapter *> tagAdapterCollection;
     //QString - ID of tag adapter
     //ITagAdapter - object created by dll module
-    static QHash<QString, TagItem *> tagCollections;
+    static QList<TagCollection *> tagCollections;
     //QString - name of the collection (name of the file)
-    //TagFolder * - pointer to the tree of folders and tags where
+    //TagCollection * - pointer to the tree of folders and tags where
     //First level element is a tag collection.
     //End level element is a tag.
     //Other levels is folder elements.

@@ -15,7 +15,6 @@ public:
     bool isTestCaseContained(QString testCaseFileName);
 
     QList<OpenTestCaseItem *> itemList;
-    OpenTestCaseItem *curItem = nullptr;
 };
 
 #endif // OPENTESTCASEMODEL_H

@@ -17,10 +17,12 @@ class TagCreateDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit TagCreateDialog(QWidget *parent = 0);
+    explicit TagCreateDialog(QWidget *parent = nullptr);
     ~TagCreateDialog();
 
-    static TagItem *createTag(QWidget *parent, TagItem *parentTagItem);
+    QString tagID();
+    QString tagName();
+    QString tagData();
 
 private slots:
 

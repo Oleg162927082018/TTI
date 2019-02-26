@@ -27,14 +27,17 @@ void OpenTestCaseRunDescriptionsController::setAllChecked()
         }
     }
 
-    QAbstractTableModel::beginResetModel();
+    //QAbstractTableModel::beginResetModel();
 
     for(int i = 0; i < dataSource->values().length(); i++)
     {
         dataSource->values().at(i)->checked = checkState;
     }
 
-    QAbstractTableModel::endResetModel();
+    QModelIndex leftTop = this->index(0, 0);
+    QModelIndex bottomRight = this->index(rowCount(QModelIndex()) - 1, 0);
+    emit this->dataChanged(leftTop, bottomRight);
+    //QAbstractTableModel::endResetModel();
 }
 
 int OpenTestCaseRunDescriptionsController::rowCount(const QModelIndex &parent) const

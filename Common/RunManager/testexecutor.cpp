@@ -55,140 +55,269 @@ void TestExecutor::run()
     if (!proc->waitForStarted(5000))
     {
         info->testResult.execTimeMs = 0;
-        info->testResult.exitStatus = "not-started";
+        info->testResult.exitStatus = ITestOutputComparator::ExitStatus::NOT_STARTED;
         info->testResult.exitCode = -1;
-        info->testResult.status = "Not started!";
-        info->testResult.color = QColor(128,128,128);
-        info->testResult.benchmarkCompareResult = -1;
-        info->testResult.previousCompareResult = -1;
 
         info->consoleOutput.append("Test not started:");
         info->consoleOutput.append(info->exeCommand);
         info->consoleOutput.append(info->argumentList);
         info->consoleOutput.append(proc->errorString());
+
+        //Not compare with benchmark
+        if(info->testResult.benchmark != nullptr) {
+            delete info->testResult.benchmark;
+            info->testResult.benchmark = nullptr;
+        }
+
+        //Not compare with previous
+        if(info->testResult.previous != nullptr) {
+            delete info->testResult.previous;
+            info->testResult.previous = nullptr;
+        }
+
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                    info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                    outStatusIndex, info->testResult.comment);
+
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
+
+        goto theEnd;
     }
-    else
+
+    proc->closeWriteChannel();
+
+    if (!proc->waitForFinished(info->waitingTime * 1000))
     {
-        proc->closeWriteChannel();
+        info->testResult.execTimeMs = info->waitingTime * 1000;
+        info->testResult.exitStatus = ITestOutputComparator::ExitStatus::TIMEOUT_EXPIRED;
+        info->testResult.exitCode = -1;
 
-        if (!proc->waitForFinished(info->waitingTime * 1000))
-        {
-            info->testResult.execTimeMs = info->waitingTime * 1000;
-            info->testResult.exitStatus = "timeout-expired";
-            info->testResult.exitCode = -1;
-            info->testResult.status = "Timeout expired!";
-            info->testResult.color = QColor(0,0,255);
-            info->testResult.benchmarkCompareResult = -1;
-            info->testResult.previousCompareResult = -1;
+        info->consoleOutput.append("Timeout expired:");
+        info->consoleOutput.append(info->exeCommand);
+        info->consoleOutput.append(info->argumentList);
 
-            info->consoleOutput.append("Timeout expired:");
-            info->consoleOutput.append(info->exeCommand);
-            info->consoleOutput.append(info->argumentList);
+        //Not compare with benchmark
+        if(info->testResult.benchmark != nullptr) {
+            delete info->testResult.benchmark;
+            info->testResult.benchmark = nullptr;
         }
-        else
+
+        //Not compare with previous
+        if(info->testResult.previous != nullptr) {
+            delete info->testResult.previous;
+            info->testResult.previous = nullptr;
+        }
+
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                    info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                    outStatusIndex, info->testResult.comment);
+
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
+
+        goto theEnd;
+    }
+
+    info->testResult.execTimeMs = QDateTime::currentMSecsSinceEpoch() - info->testResult.execTimeMs;
+    info->consoleOutput.append(QString::fromLocal8Bit(proc->readAll().data()).split('\n'));
+    info->testResult.exitCode = proc->exitCode();
+
+    if(info->testResult.exitCode != 0) {
+
+        info->testResult.exitStatus = ITestOutputComparator::ExitStatus::EXIT_CODE;
+
+        //Not compare with benchmark
+        if(info->testResult.benchmark != nullptr) {
+            delete info->testResult.benchmark;
+            info->testResult.benchmark = nullptr;
+        }
+
+        //Not compare with previous
+        if(info->testResult.previous != nullptr) {
+            delete info->testResult.previous;
+            info->testResult.previous = nullptr;
+        }
+
+        //if exit code != 0 or compression level == 0 need not compare with any thing
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                   info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                   outStatusIndex, info->testResult.comment);
+
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
+
+        info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
+
+        goto theEnd;
+    }
+
+    info->testResult.exitStatus = ITestOutputComparator::ExitStatus::COMPLETED;
+
+    if(info->compressionLevel == 0) {
+
+        //Not compare with benchmark
+        if(info->testResult.benchmark != nullptr) {
+            delete info->testResult.benchmark;
+            info->testResult.benchmark = nullptr;
+        }
+
+        //Not compare with previous
+        if(info->testResult.previous != nullptr) {
+            delete info->testResult.previous;
+            info->testResult.previous = nullptr;
+        }
+
+        //if exit code != 0 or compression level == 0 need not compare with any thing
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                   info->consoleOutput, info->outputFullFolderName, nullptr, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                   outStatusIndex, info->testResult.comment);
+
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
+
+        info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
+
+    } else if(info->compressionLevel == 3) {
+
+        //Compare with all and delete if equal output found
+        if((info->testResult.benchmark != nullptr) && !info->benchmarkOutputFullFolderName.isNull() && !info->outputFullFolderName.isNull())
         {
-            info->testResult.execTimeMs = QDateTime::currentMSecsSinceEpoch() - info->testResult.execTimeMs;
+            info->testResult.benchmark->compareResult =
+                    info->comparator->Compare(info->benchmarkOutputFullFolderName, info->outputFullFolderName);
+        }
 
-            QByteArray result = proc->readAll();
-            QString console = QString::fromLocal8Bit(result.data());
-            info->consoleOutput.append(console.split('\n'));
+        if((info->testResult.previous != nullptr) && !info->previousOutputFullFolderName.isNull() && !info->outputFullFolderName.isNull())
+        {
+            info->testResult.previous->compareResult =
+                    info->comparator->Compare(info->previousOutputFullFolderName, info->outputFullFolderName);
+        }
 
-            info->testResult.exitStatus = "complete";
-            info->testResult.exitCode = proc->exitCode();
+        int *benchmarkCompare = nullptr;
+        if(info->testResult.benchmark != nullptr) {
+            benchmarkCompare = new int;
+            *benchmarkCompare = info->testResult.benchmark->compareResult;
+        }
 
-            //Compare results with previous, benchmark and other results
-            if(info->compressionLevel == 3)
-            {
-                //Compare with all and delete if equal output found
-                if(info->benchmarkOutputFullFolderName.isNull() || info->outputFullFolderName.isNull())
-                {
-                    info->testResult.benchmarkCompareResult = -1;
-                }
-                else { info->testResult.benchmarkCompareResult = info->comparator->Compare(info->benchmarkOutputFullFolderName, info->outputFullFolderName); }
+        int *prevCompare = nullptr;
+        if(info->testResult.previous != nullptr) {
+            prevCompare = new int;
+            *prevCompare = info->testResult.previous->compareResult;
+        }
 
-                if(info->previousOutputFullFolderName.isNull() || info->outputFullFolderName.isNull())
-                {
-                    info->testResult.previousCompareResult = -1;
-                }
-                else { info->testResult.previousCompareResult = info->comparator->Compare(info->previousOutputFullFolderName, info->outputFullFolderName); }
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                   info->consoleOutput, info->outputFullFolderName, benchmarkCompare, prevCompare, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                   outStatusIndex, info->testResult.comment);
 
-                info->comparator->CalculateStatus(info->consoleOutput, info->outputFullFolderName,
-                                                  info->testResult.exitCode, info->testResult.execTimeMs, info->testResult.benchmarkCompareResult,
-                                                  info->testResult.previousCompareResult, info->testResult.status, info->testResult.color);
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
 
-                if(!CompressWithBenchmark() && !CompressWithPrevious() && !CompressWithOther())
-                {
-                    info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
-                }
-            }
-            else if(info->compressionLevel == 2)
-            {
-                //Compare with previous and with benchmark
-                //Delete if equal with anything
-                if(info->benchmarkOutputFullFolderName.isNull() || info->outputFullFolderName.isNull())
-                {
-                    info->testResult.benchmarkCompareResult = -1;
-                }
-                else { info->testResult.benchmarkCompareResult = info->comparator->Compare(info->benchmarkOutputFullFolderName, info->outputFullFolderName); }
+        if(benchmarkCompare != nullptr) { delete benchmarkCompare; }
+        if(prevCompare != nullptr) { delete prevCompare; }
 
-                if(info->previousOutputFullFolderName.isNull() || info->outputFullFolderName.isNull())
-                {
-                    info->testResult.previousCompareResult = -1;
-                }
-                else { info->testResult.previousCompareResult = info->comparator->Compare(info->previousOutputFullFolderName, info->outputFullFolderName); }
+        if(!CompressWithBenchmark() && !CompressWithPrevious() && !CompressWithOther())
+        {
+            info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
+        }
 
-                info->comparator->CalculateStatus(info->consoleOutput, info->outputFullFolderName,
-                                                  info->testResult.exitCode, info->testResult.execTimeMs, info->testResult.benchmarkCompareResult,
-                                                  info->testResult.previousCompareResult, info->testResult.status, info->testResult.color);
+    } else if(info->compressionLevel == 2) {
 
-                if(!CompressWithBenchmark() && !CompressWithPrevious())
-                {
-                    info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
-                }
-            }
-            else if(info->compressionLevel == 1)
-            {
-                //Compare with benchmark
-                //Delete if equal with benchmark
-                if(info->benchmarkOutputFullFolderName.isNull() || info->outputFullFolderName.isNull())
-                {
-                    info->testResult.benchmarkCompareResult = -1;
-                }
-                else { info->testResult.benchmarkCompareResult = info->comparator->Compare(info->benchmarkOutputFullFolderName, info->outputFullFolderName); }
+        //Compare with previous and with benchmark
+        //Delete if equal with benchmark or previous
+        if((info->testResult.benchmark != nullptr) && !info->benchmarkOutputFullFolderName.isNull() && !info->outputFullFolderName.isNull())
+        {
+            info->testResult.benchmark->compareResult =
+                    info->comparator->Compare(info->benchmarkOutputFullFolderName, info->outputFullFolderName);
+        }
 
-                info->testResult.previousCompareResult = -1;
+        if((info->testResult.previous != nullptr) && !info->previousOutputFullFolderName.isNull() && !info->outputFullFolderName.isNull())
+        {
+            info->testResult.previous->compareResult =
+                    info->comparator->Compare(info->previousOutputFullFolderName, info->outputFullFolderName);
+        }
 
-                info->comparator->CalculateStatus(info->consoleOutput, info->outputFullFolderName,
-                                                  info->testResult.exitCode, info->testResult.execTimeMs, info->testResult.benchmarkCompareResult,
-                                                  info->testResult.previousCompareResult, info->testResult.status, info->testResult.color);
-                if(!CompressWithBenchmark())
-                {
-                    info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
-                }
-            }
-            else if(info->compressionLevel == 0)
-            {
-               //Not compare with anything
-               info->testResult.benchmarkCompareResult = -1;
-               info->testResult.previousCompareResult = -1;
-               info->comparator->CalculateStatus(info->consoleOutput, info->outputFullFolderName,
-                                                 info->testResult.exitCode, info->testResult.execTimeMs, info->testResult.benchmarkCompareResult,
-                                                 info->testResult.previousCompareResult, info->testResult.status, info->testResult.color);
+        int *benchmarkCompare = nullptr;
+        if(info->testResult.benchmark != nullptr) {
+            benchmarkCompare = new int;
+            *benchmarkCompare = info->testResult.benchmark->compareResult;
+        }
 
-               info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
-            }
+        int *prevCompare = nullptr;
+        if(info->testResult.previous != nullptr) {
+            prevCompare = new int;
+            *prevCompare = info->testResult.previous->compareResult;
+        }
+
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                   info->consoleOutput, info->outputFullFolderName, benchmarkCompare, prevCompare, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                   outStatusIndex, info->testResult.comment);
+
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
+
+        if(benchmarkCompare != nullptr) { delete benchmarkCompare; }
+        if(prevCompare != nullptr) { delete prevCompare; }
+
+        if(!CompressWithBenchmark() && !CompressWithPrevious())
+        {
+            info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
+        }
+
+    } else if(info->compressionLevel == 1) {
+
+        //Not compare with previous
+        if(info->testResult.previous != nullptr) {
+            delete info->testResult.previous;
+            info->testResult.previous = nullptr;
+        }
+
+        //Compare only with benchmark
+        //Delete if equal with benchmark
+        if((info->testResult.benchmark != nullptr) && !info->benchmarkOutputFullFolderName.isNull() && !info->outputFullFolderName.isNull())
+        {
+            info->testResult.benchmark->compareResult =
+                    info->comparator->Compare(info->benchmarkOutputFullFolderName, info->outputFullFolderName);
+        }
+
+        int *benchmarkCompare = nullptr;
+        if(info->testResult.benchmark != nullptr) {
+            benchmarkCompare = new int;
+            *benchmarkCompare = info->testResult.benchmark->compareResult;
+        }
+
+        int outStatusIndex;
+        QString testStatusDescription;
+        info->comparator->CalculateStatusIndex(info->testResult.exitStatus, info->testResult.exitCode, info->testResult.execTimeMs,
+                   info->consoleOutput, info->outputFullFolderName, benchmarkCompare, nullptr, ITestOutputComparator::BenchmarkStatus::NO_BENCHMARK,
+                   outStatusIndex, info->testResult.comment);
+
+        info->comparator->GetTestStatus(outStatusIndex, info->testResult.label, info->testResult.color, testStatusDescription);
+
+        if(benchmarkCompare != nullptr) { delete benchmarkCompare; }
+
+        if(!CompressWithBenchmark())
+        {
+            info->testResult.outMark = QDir(info->outputFullFolderName).dirName();
         }
     }
 
+theEnd:
     delete proc;
     emit finished(info);
 }
 
 bool TestExecutor::CompressWithBenchmark()
 {
-    if(info->testResult.benchmarkCompareResult == 0)
+    TestCompareResult *benchmark = info->testResult.benchmark;
+    if((benchmark != nullptr) && (benchmark->compareResult == 0))
     {
-        info->testResult.outMark = info->testResult.benchmarkOutMark;
+        info->testResult.outMark = info->testResult.benchmark->outMark;
         QDir currentOutputFolder(info->outputFullFolderName);
         currentOutputFolder.removeRecursively();
         return true;
@@ -198,9 +327,10 @@ bool TestExecutor::CompressWithBenchmark()
 
 bool TestExecutor::CompressWithPrevious()
 {
-    if(info->testResult.previousCompareResult == 0)
+    TestCompareResult *previous = info->testResult.previous;
+    if((previous != nullptr) && (previous->compareResult == 0))
     {
-        info->testResult.outMark = info->testResult.previousOutMark;
+        info->testResult.outMark = info->testResult.previous->outMark;
         QDir currentOutputFolder(info->outputFullFolderName);
         currentOutputFolder.removeRecursively();
         return true;

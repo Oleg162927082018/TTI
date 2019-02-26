@@ -6,6 +6,13 @@ OpenTestCaseListController::OpenTestCaseListController(QObject* parent) : QAbstr
 {
 }
 
+void OpenTestCaseListController::emitDataChanged()
+{
+    QModelIndex leftTop = this->index(0);
+    QModelIndex bottomRight = this->index(rowCount(QModelIndex()) - 1);
+    emit this->dataChanged(leftTop, bottomRight);
+}
+
 int OpenTestCaseListController::rowCount(const QModelIndex &parent) const
 {
     if(dataSource != nullptr)
@@ -31,14 +38,4 @@ QVariant OpenTestCaseListController::data(const QModelIndex &index, int role) co
     {
         return QVariant();
     }
-}
-
-void OpenTestCaseListController::beginResetModel()
-{
-    QAbstractListModel::beginResetModel();
-}
-
-void OpenTestCaseListController::endResetModel()
-{
-    QAbstractListModel::endResetModel();
 }

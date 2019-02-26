@@ -6,6 +6,8 @@
 #include <QTextStream>
 #include <QDateTime>
 
+#include <../TTI/Common/itestcasetemplate.h>
+
 QString DBManager::GetRunName(int runNum)
 {
     return QString("%1").arg(runNum, 8, 10,  QLatin1Char('0'));
@@ -378,6 +380,15 @@ TestStatus *DBManager::GetTestStatus(QString testCaseFullFileName, QString testR
                     benchmarkInfo.status = benchmarkElement.attribute("status");
                     int runNum = benchmarkElement.attribute("run").toInt();
                     benchmarkInfo.outMark = benchmarkElement.attribute("out");
+
+                    QDomElement labelElement = benchmarkElement.firstChildElement("label");
+                    benchmarkInfo.label = labelElement.text();
+
+                    QDomElement commentElement = benchmarkElement.firstChildElement("comment");
+                    benchmarkInfo.comment = commentElement.text();
+
+                    QDomElement colorElement = benchmarkElement.firstChildElement("color");
+                    benchmarkInfo.color = QColor(colorElement.text());
                     status->benchmarks.insert(runNum, benchmarkInfo);
 
                     benchmarkElement = benchmarkElement.nextSiblingElement("benchmark");
@@ -432,6 +443,27 @@ void DBManager::SaveTestStatus(QString testCaseFullFileName, TestStatus *ts)
         benchmarkElement.setAttribute("run", GetRunName(key));
         benchmarkElement.setAttribute("out", ts->benchmarks.value(key).outMark);
         benchmarkElement.setAttribute("status", ts->benchmarks.value(key).status);
+
+        //Status
+        QDomElement labelElement = doc.createElement("label");
+        benchmarkElement.appendChild(labelElement);
+
+        QDomText labelValue = doc.createTextNode(ts->benchmarks.value(key).label);
+        labelElement.appendChild(labelValue);
+
+        //Comment
+        QDomElement commentElement = doc.createElement("comment");
+        benchmarkElement.appendChild(commentElement);
+
+        QDomText commentValue = doc.createTextNode(ts->benchmarks.value(key).comment);
+        commentElement.appendChild(commentValue);
+
+        //Color
+        QDomElement colorElement = doc.createElement("color");
+        benchmarkElement.appendChild(colorElement);
+
+        QDomText colorValue = doc.createTextNode(ts->benchmarks.value(key).color.name());
+        colorElement.appendChild(colorValue);
     }
 
     //Tags
@@ -478,23 +510,49 @@ TestResult *DBManager::GetTestResult(QString testCaseFullFileName, QString relat
                 result->outMark = outElement.text();
 
                 QDomElement benchmarkElement = rootElement.firstChildElement("benchmark");
-                result->benchmarkOutMark = benchmarkElement.attribute("out");
-                result->benchmarkRunMark = benchmarkElement.attribute("run");
-                result->benchmarkStatus = benchmarkElement.attribute("status");
-                result->benchmarkCompareResult = benchmarkElement.text().toInt();
-
+                if(!benchmarkElement.isNull()) {
+                    result->benchmark = new TestCompareResult();
+                    result->benchmark->status = benchmarkElement.attribute("status");
+                    result->benchmark->outMark = benchmarkElement.attribute("out");
+                    result->benchmark->runMark = benchmarkElement.attribute("run");
+                    result->benchmark->compareResult = benchmarkElement.text().toInt();
+                }
 
                 QDomElement previousElement = rootElement.firstChildElement("previous");
-                result->previousOutMark = previousElement.attribute("out");
-                result->previousRunMark = previousElement.attribute("run");
-                result->previousCompareResult = previousElement.text().toInt();
+                if(!previousElement.isNull()) {
+                    result->previous = new TestCompareResult();
+                    result->previous->status = "";
+                    result->previous->outMark = previousElement.attribute("out");
+                    result->previous->runMark = previousElement.attribute("run");
+                    result->previous->compareResult = previousElement.text().toInt();
+                }
 
                 QDomElement exitElement = rootElement.firstChildElement("exit-code");
-                result->exitStatus = exitElement.attribute("status");
                 result->exitCode = exitElement.text().toInt();
 
+                QString exitStatusStr = exitElement.attribute("status");
+                if(exitStatusStr == "not-started") {
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::NOT_STARTED;
+
+                } else if(exitStatusStr == "timeout-expired") {
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::TIMEOUT_EXPIRED;
+
+                } else if(exitStatusStr == "exit-code") {
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::EXIT_CODE;
+
+                } else { //if(exitStatusStr == "completed")
+
+                    result->exitStatus = ITestOutputComparator::ExitStatus::COMPLETED;
+                }
+
                 QDomElement statusElement = rootElement.firstChildElement("test-status");
-                result->status = statusElement.text();
+                result->label = statusElement.text();
+
+                QDomElement commentElement = rootElement.firstChildElement("comment");
+                result->comment = commentElement.text();
 
                 QDomElement colorElement = rootElement.firstChildElement("test-color");
                 result->color = QColor(colorElement.text());
@@ -678,30 +736,30 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
     outputElement.appendChild(outputValue);
 
     //Benchmark
-    if(!tr->benchmarkRunMark.isEmpty())
-    {
+    if(tr->benchmark != nullptr) {
+
         QDomElement benchmarkElement = doc.createElement("benchmark");
         rootNode.appendChild(benchmarkElement);
 
-        QDomText benchmarkValue = doc.createTextNode(QString::number(tr->benchmarkCompareResult));
+        QDomText benchmarkValue = doc.createTextNode(QString::number(tr->benchmark->compareResult));
         benchmarkElement.appendChild(benchmarkValue);
 
-        benchmarkElement.setAttribute("run", tr->benchmarkRunMark);
-        benchmarkElement.setAttribute("out", tr->benchmarkOutMark);
-        benchmarkElement.setAttribute("status", tr->benchmarkStatus);
+        benchmarkElement.setAttribute("run", tr->benchmark->runMark);
+        benchmarkElement.setAttribute("out", tr->benchmark->outMark);
+        benchmarkElement.setAttribute("status", tr->benchmark->status);
     }
 
     //Previous
-    if(!tr->previousRunMark.isEmpty())
-    {
+    if(tr->previous != nullptr) {
+
         QDomElement previousElement = doc.createElement("previous");
         rootNode.appendChild(previousElement);
 
-        QDomText previousValue = doc.createTextNode(QString::number(tr->previousCompareResult));
+        QDomText previousValue = doc.createTextNode(QString::number(tr->previous->compareResult));
         previousElement.appendChild(previousValue);
 
-        previousElement.setAttribute("run", tr->previousRunMark);
-        previousElement.setAttribute("out", tr->previousOutMark);
+        previousElement.setAttribute("run", tr->previous->runMark);
+        previousElement.setAttribute("out", tr->previous->outMark);
     }
 
     //Exit code
@@ -710,8 +768,23 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
 
     QDomText exitCodeValue = doc.createTextNode(QString::number(tr->exitCode));
     exitCodeElement.appendChild(exitCodeValue);
+    switch(tr->exitStatus) {
+        case ITestOutputComparator::ExitStatus::NOT_STARTED:
+            exitCodeElement.setAttribute("status", "not-started");
+            break;
 
-    exitCodeElement.setAttribute("status", tr->exitStatus);
+        case ITestOutputComparator::ExitStatus::TIMEOUT_EXPIRED:
+            exitCodeElement.setAttribute("status", "timeout-expired");
+            break;
+
+        case ITestOutputComparator::ExitStatus::EXIT_CODE:
+            exitCodeElement.setAttribute("status", "exit-code");
+            break;
+
+        default: //ITestOutputComparator::ExitStatus::COMPLETED
+            exitCodeElement.setAttribute("status", "completed");
+            break;
+    }
 
     //Exec time
     QDomElement exeTimeElement = doc.createElement("exec-time-ms");
@@ -724,8 +797,15 @@ void DBManager::SaveTestResult(QString testCaseFullFileName, QString runName, QS
     QDomElement statusElement = doc.createElement("test-status");
     rootNode.appendChild(statusElement);
 
-    QDomText statusValue = doc.createTextNode(tr->status);
+    QDomText statusValue = doc.createTextNode(tr->label);
     statusElement.appendChild(statusValue);
+
+    //Comment
+    QDomElement commentElement = doc.createElement("comment");
+    rootNode.appendChild(commentElement);
+
+    QDomText commentValue = doc.createTextNode(tr->comment);
+    commentElement.appendChild(commentValue);
 
     //Color
     QDomElement colorElement = doc.createElement("test-color");
@@ -769,92 +849,19 @@ QVector<int> *DBManager::GetOutList(QString testCaseFullFileName, QString relati
     return result;
 }
 
-void DBManager::SaveTagCollection(TagItem *tagCollection)
+TagCollection *DBManager::LoadTagCollection(QString fullFileName)
 {
-    QDomDocument doc;
-
-    //Root
-    QDomNode xmlNode = doc.createProcessingInstruction("xml","version=\"1.0\" encoding=\"UTF-8\"");
-    doc.insertBefore(xmlNode, doc.firstChild());
-
-    QDomElement rootNode = doc.createElement("collection");
-    doc.appendChild(rootNode);
-
-    //Description
-    QDomElement descriptionNode = doc.createElement("description");
-    rootNode.appendChild(descriptionNode);
-
-    QDomCDATASection descriptionValue = doc.createCDATASection(tagCollection->collection->description);
-    descriptionNode.appendChild(descriptionValue);
-
-    QDomElement tagsNode = doc.createElement("tags");
-    rootNode.appendChild(tagsNode);
-
-    SaveTagFolderElements(tagsNode, tagCollection);
-
-    //Save
-    QFileInfo saveFileInfo(tagCollection->collection->fullFileName);
-    QDir().mkpath(saveFileInfo.absolutePath());
-
-    QFile file(tagCollection->collection->fullFileName);
-    if(file.open(QIODevice::WriteOnly)) {
-        QTextStream stream(&file);
-        stream << doc.toString();
-        file.close();
-    }
-}
-
-void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagItem *tagItem)
-{
-    for(int i = 0; i < tagItem->subItems.length(); i++)
-    {
-        TagItem *subItem = tagItem->subItems.at(i);
-
-        if(subItem->tag != nullptr)
-        {
-            QDomElement tagElement = folderElement.ownerDocument().createElement("tag");
-            folderElement.appendChild(tagElement);
-
-            tagElement.setAttribute("type", subItem->tag->type);
-            tagElement.setAttribute("name", subItem->name);
-
-            QDomCDATASection dataValue = folderElement.ownerDocument().createCDATASection(subItem->tag->data);
-            tagElement.appendChild(dataValue);
-        }
-        else //folder
-        {
-            QDomElement subFolderElement = folderElement.ownerDocument().createElement("folder");
-            folderElement.appendChild(subFolderElement);
-
-            subFolderElement.setAttribute("name", subItem->name);
-
-            //Description
-            QDomElement descriptionNode = folderElement.ownerDocument().createElement("description");
-            subFolderElement.appendChild(descriptionNode);
-
-            QDomCDATASection descriptionValue = folderElement.ownerDocument().createCDATASection(subItem->folder->description);
-            descriptionNode.appendChild(descriptionValue);
-
-            //Sub folders
-            SaveTagFolderElements(subFolderElement, subItem);
-        }
-    }
-}
-
-TagItem *DBManager::GetTagCollection(QString fullFileName)
-{
-    TagItem *tagCollection = nullptr;
+    TagCollection *tagCollection = nullptr;
 
     QFile file(fullFileName);
     if(file.open(QIODevice::ReadOnly)) {
         QDomDocument doc;
         if(doc.setContent(&file)) {
-            tagCollection = new TagItem();
-            tagCollection->collection = new TagCollection();
+            tagCollection = new TagCollection();
+            tagCollection->owner = tagCollection;
 
             tagCollection->name = QFileInfo(fullFileName).baseName();
-            tagCollection->path = tagCollection->name;
-            tagCollection->collection->fullFileName = fullFileName;
+            tagCollection->fullFileName = fullFileName;
 
             //Parse Xml Document
             QDomElement collectionElement = doc.firstChildElement("collection");
@@ -863,18 +870,18 @@ TagItem *DBManager::GetTagCollection(QString fullFileName)
             QDomElement descriptionElement = collectionElement.firstChildElement("description");
             if(!descriptionElement.isNull())
             {
-                tagCollection->collection->description = descriptionElement.firstChild().toCDATASection().data();
+                tagCollection->description = descriptionElement.firstChild().toCDATASection().data();
             }
 
             QDomElement tagsElement = collectionElement.firstChildElement("tags");
-            if(!tagsElement.isNull()) { LoadTagFolderElements(tagsElement, tagCollection); }
+            if(!tagsElement.isNull()) { LoadTagFolderElements(tagsElement, tagCollection, tagCollection); }
         }
         file.close();
     }
     return tagCollection;
 }
 
-void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagItem *tagFolder)
+void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagFolder *tagFolder, TagCollection *owner)
 {
     QDomElement tagListElement = folderElement.firstChildElement();
     while(!tagListElement.isNull())
@@ -882,41 +889,106 @@ void DBManager::LoadTagFolderElements(QDomElement &folderElement, TagItem *tagFo
         QString nodeName = tagListElement.nodeName();
         if(nodeName.compare("tag", Qt::CaseInsensitive) == 0)
         {
-            TagItem *tagItem = new TagItem();
-            tagItem->parent = tagFolder;
-            tagItem->collection = tagFolder->collection;
+            Tag *tag = new Tag();
+            tag->owner = owner;
+            tag->parent = tagFolder;
+            tag->type = tagListElement.attribute("type", "");
+            tag->name = tagListElement.attribute("name","-");
+            tag->data = tagListElement.firstChild().toCDATASection().data();
 
-            tagItem->tag = new Tag();
-            tagItem->tag->type = tagListElement.attribute("type", "");
-            tagItem->name = tagListElement.attribute("name","-");
-            tagItem->path = tagFolder->path + ":" + tagItem->name;
-            tagItem->tag->data = tagListElement.firstChild().toCDATASection().data();
-
-            tagFolder->subItems.append(tagItem);
+            tagFolder->tags.append(tag);
         }
         else if(nodeName.compare("folder", Qt::CaseInsensitive) == 0)
         {
-            TagItem *subFolder = new TagItem();
+            TagFolder *subFolder = new TagFolder();
+            subFolder->owner = owner;
             subFolder->parent = tagFolder;
-            subFolder->collection = tagFolder->collection;
-
-            subFolder->folder = new TagFolder();
             subFolder->name = tagListElement.attribute("name","-");
-            subFolder->path = tagFolder->path + ":" + subFolder->name;
 
             QDomElement folderDescriptionElement = tagListElement.firstChildElement("description");
             if(!folderDescriptionElement.isNull())
             {
-                subFolder->folder->description = folderDescriptionElement.firstChild().toCDATASection().data();
+                subFolder->description = folderDescriptionElement.firstChild().toCDATASection().data();
             }
 
-            LoadTagFolderElements(tagListElement, subFolder);
+            LoadTagFolderElements(tagListElement, subFolder, owner);
 
-            tagFolder->subItems.append(subFolder);
+            tagFolder->folders.append(subFolder);
         }
         tagListElement = tagListElement.nextSiblingElement();
     }
+}
 
+void DBManager::SaveTagCollection(TagCollection *tagCollection)
+{
+    QDomDocument doc;
+
+    //Root
+    QDomNode xmlNode = doc.createProcessingInstruction("xml","version=\"1.0\" encoding=\"UTF-8\"");
+    doc.insertBefore(xmlNode, doc.firstChild());
+
+    QDomElement rootElement = doc.createElement("collection");
+    doc.appendChild(rootElement);
+
+    //Description
+    QDomElement descriptionNode = doc.createElement("description");
+    rootElement.appendChild(descriptionNode);
+
+    QDomCDATASection descriptionValue = doc.createCDATASection(tagCollection->description);
+    descriptionNode.appendChild(descriptionValue);
+
+    QDomElement tagsNode = doc.createElement("tags");
+    rootElement.appendChild(tagsNode);
+
+    SaveTagFolderElements(tagsNode, tagCollection);
+
+    //Save
+    QFileInfo saveFileInfo(tagCollection->fullFileName);
+    QDir().mkpath(saveFileInfo.absolutePath());
+
+    QFile file(tagCollection->fullFileName);
+    if(file.open(QIODevice::WriteOnly)) {
+        QTextStream stream(&file);
+        stream << doc.toString();
+        file.close();
+    }
+}
+
+void DBManager::SaveTagFolderElements(QDomElement &folderElement, TagFolder *tagFolder)
+{
+    for(int i = 0; i < tagFolder->folders.length(); i++)
+    {
+        TagFolder *subFolder = tagFolder->folders.at(i);
+
+        QDomElement subFolderElement = folderElement.ownerDocument().createElement("folder");
+        folderElement.appendChild(subFolderElement);
+
+        subFolderElement.setAttribute("name", subFolder->name);
+
+        //Description
+        QDomElement descriptionNode = folderElement.ownerDocument().createElement("description");
+        subFolderElement.appendChild(descriptionNode);
+
+        QDomCDATASection descriptionValue = folderElement.ownerDocument().createCDATASection(subFolder->description);
+        descriptionNode.appendChild(descriptionValue);
+
+        //Sub folders
+        SaveTagFolderElements(subFolderElement, subFolder);
+    }
+
+    for(int i = 0; i < tagFolder->tags.length(); i++)
+    {
+        Tag *tag = tagFolder->tags.at(i);
+
+        QDomElement tagElement = folderElement.ownerDocument().createElement("tag");
+        folderElement.appendChild(tagElement);
+
+        tagElement.setAttribute("type", tag->type);
+        tagElement.setAttribute("name", tag->name);
+
+        QDomCDATASection dataValue = folderElement.ownerDocument().createCDATASection(tag->data);
+        tagElement.appendChild(dataValue);
+    }
 }
 
 void DBManager::DeleteTagCollection(QString fullFileName)

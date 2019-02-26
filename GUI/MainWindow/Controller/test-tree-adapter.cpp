@@ -17,6 +17,13 @@ void TestTreeAdapter::endResetModel()
     QAbstractItemModel::endResetModel();
 }
 
+void TestTreeAdapter::emitDataChanged()
+{
+    QModelIndex topLeft = this->index(0,0);
+    QModelIndex bottomRight = this->index(-1, -1);
+    emit this->dataChanged(topLeft, bottomRight);
+}
+
 QModelIndex TestTreeAdapter::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent)) { return QModelIndex(); }
@@ -37,8 +44,15 @@ QVariant TestTreeAdapter::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) { return QVariant(); }
 
-    if (role == Qt::DisplayRole)
-    {
+    if (role == Qt::CheckStateRole) {
+
+        if(index.column() == 0)
+        {
+            MainWindowTreeFolder* folder = static_cast<MainWindowTreeFolder*>(index.internalPointer());
+            return folder->checkState;
+        }
+    } else if (role == Qt::DisplayRole) {
+
         if(index.column() == 0)
         {
             MainWindowTreeFolder* folder = static_cast<MainWindowTreeFolder*>(index.internalPointer());
@@ -91,4 +105,38 @@ int TestTreeAdapter::findRow(MainWindowTreeFolder *treeFolder) const
     {
         return treeFolder->parentFolder->subFolders.indexOf(treeFolder);
     }
+}
+
+Qt::ItemFlags TestTreeAdapter::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags flags = this->QAbstractItemModel::flags(index);
+
+    if(index.column() == 0)
+    {
+        flags |= Qt::ItemIsTristate;
+        flags |= Qt::ItemIsUserCheckable;
+    }
+
+    return flags;
+}
+
+bool TestTreeAdapter::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    bool success = true;
+
+    if (index.isValid())
+    {
+        if (role == Qt::CheckStateRole)
+        {
+            MainWindowTreeFolder* folder = static_cast<MainWindowTreeFolder*>(index.internalPointer());
+            MainWindowModel::setCheckState(folder);
+            success = true;
+        }
+    }
+    else
+    {
+        success = false;
+    }
+
+    return success;
 }

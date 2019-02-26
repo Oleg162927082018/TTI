@@ -5,6 +5,8 @@
 #include <QFileInfo>
 
 QList<MainWindowTreeFolder *> MainWindowModel::tree;
+TestTreeAdapter MainWindowModel::testTreeAdapter;
+TestTableAdapter MainWindowModel::testTableAdapter;
 
 MainWindowModel::MainWindowModel()
 {
@@ -26,20 +28,9 @@ void MainWindowModel::AddTableItem(MainWindowTreeFolder *treeFolder, MainWindowT
     if(treeFolder != nullptr)
     {
         treeFolder->fullTableItems.append(tableItem);
-        treeFolder->visibleTableItems.append(tableItem);
+        treeFolder->visibleTableItems.insert(treeFolder->fullTableItems.count() - 1,tableItem);
 
         AddTableItem(treeFolder->parentFolder, tableItem);
-    }
-}
-
-void MainWindowModel::ClearVisibleTableItems(MainWindowTreeFolder *treeFolder)
-{
-    if(treeFolder != nullptr)
-    {
-        treeFolder->visibleTableItems.clear();
-        foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
-            ClearVisibleTableItems(subFolder);
-        }
     }
 }
 
@@ -47,18 +38,104 @@ void MainWindowModel::SetVisibleTableItem(MainWindowTreeFolder *treeFolder, Main
 {
     if(treeFolder != nullptr)
     {
-        if(treeFolder->fullTableItems.contains(tableItem))
+        int tableItemInd = treeFolder->fullTableItems.indexOf(tableItem);
+        if(tableItemInd >= 0)
         {
-
-            if(treeFolder->visibleTableItems.contains(tableItem)) {
-                if(!isVisible) { treeFolder->visibleTableItems.removeOne(tableItem); }
+            if(treeFolder->visibleTableItems.keys().contains(tableItemInd)) {
+                if(!isVisible) { treeFolder->visibleTableItems.remove(tableItemInd); }
             } else {
-                if(isVisible) { treeFolder->visibleTableItems.append(tableItem); }
+                if(isVisible) { treeFolder->visibleTableItems.insert(tableItemInd, tableItem); }
             }
 
             foreach (MainWindowTreeFolder *subFolder, treeFolder->subFolders) {
                 SetVisibleTableItem(subFolder, tableItem, isVisible);
             }
+        }
+    }
+}
+
+void MainWindowModel::setCheckStateSubFolder(MainWindowTreeFolder *folder, int checkState)
+{
+    folder->checkState = checkState;
+    foreach (MainWindowTreeFolder *subfolder, folder->subFolders) {
+        setCheckStateSubFolder(subfolder, checkState);
+    }
+}
+
+void MainWindowModel::setParentCheckState(MainWindowTreeFolder *folder)
+{
+    if(folder != nullptr) {
+
+        int checked_count = 0, unchecked_count = 0, partially_count = 0;
+
+        foreach(MainWindowTreeFolder *subFolder, folder->subFolders) {
+            switch(subFolder->checkState) {
+                case Qt::Checked: checked_count++;
+                    break;
+                case Qt::Unchecked: unchecked_count++;
+                    break;
+                case Qt::PartiallyChecked: partially_count++;
+                    break;
+            }
+        }
+        foreach(MainWindowTableItem *tableItem, folder->fullTableItems) {
+            if(tableItem->checked) { checked_count++; } else { unchecked_count++; }
+        }
+
+        int parentCheckState;
+        if((partially_count == 0) && (unchecked_count == 0)) { parentCheckState = Qt::Checked; }
+        else if((partially_count == 0) && (checked_count == 0)) { parentCheckState = Qt::Unchecked; }
+        else { parentCheckState = Qt::PartiallyChecked; }
+
+        if(folder->checkState != parentCheckState) {
+            folder->checkState = parentCheckState;
+            setParentCheckState(folder->parentFolder);
+        }
+    }
+}
+
+void MainWindowModel::setCheckState(MainWindowTreeFolder *folder)
+{
+    bool isChecked = false;
+
+    foreach (MainWindowTableItem *tableItem, folder->fullTableItems) {
+        if(!tableItem->checked) {
+            isChecked = true;
+            break;
+        }
+    }
+
+    foreach (MainWindowTableItem *tableItem, folder->fullTableItems) {
+        tableItem->checked = isChecked;
+    }
+    setCheckStateSubFolder(folder, isChecked?Qt::Checked:Qt::Unchecked);
+    setParentCheckState(folder->parentFolder);
+
+    testTreeAdapter.emitDataChanged();
+    testTableAdapter.emitDataChanged();
+}
+
+MainWindowTreeFolder *MainWindowModel::findOwnerFolder(MainWindowTableItem *tableItem, MainWindowTreeFolder *rootFolder)
+{
+    foreach(MainWindowTreeFolder *subFolder, rootFolder->subFolders) {
+        if(subFolder->fullTableItems.contains(tableItem)) {
+            return findOwnerFolder(tableItem, subFolder);
+        }
+    }
+
+    return rootFolder;
+}
+
+void MainWindowModel::setCheckState(MainWindowTableItem *tableItem, bool isChecked)
+{
+    tableItem->checked = isChecked;
+    foreach (MainWindowTreeFolder *rootFolder, tree) {
+        if(rootFolder->ownerTestCase == tableItem->ownerTestCase) {
+            MainWindowTreeFolder *ownerFolder = findOwnerFolder(tableItem, rootFolder);
+            setParentCheckState(ownerFolder);
+            testTreeAdapter.emitDataChanged();
+            testTableAdapter.emitDataChanged();
+            break;
         }
     }
 }
@@ -164,9 +241,10 @@ void MainWindowModel::LoadFolderResults(MainWindowTreeFolder *folder)
 
     if(tc == nullptr) { return; }
 
-    for(int i = 0; i < folder->visibleTableItems.length(); i++)
+    for(int i = 0; i < folder->visibleTableItems.count(); i++)
     {
-        MainWindowTableItem *test = folder->visibleTableItems.at(i);
+        int key = folder->visibleTableItems.keys().at(i);
+        MainWindowTableItem *test = folder->visibleTableItems.value(key);
 
         for(int k = 0; k < folder->visibleTableHeaders->count(); k++)
         {
@@ -174,7 +252,7 @@ void MainWindowModel::LoadFolderResults(MainWindowTreeFolder *folder)
             TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                      test->status->relativeFileName,
                                                      DBManager::GetRunName(keyRun));
-            test->results.insert(keyRun, r);
+            if(r != nullptr) { test->results.insert(keyRun, r); }
         }
     }
 }
@@ -191,12 +269,12 @@ void MainWindowModel::LoadRunResults(MainWindowTreeFolder *folder, MainWindowTab
 
     for(int i = 0; i < folder->visibleTableItems.count(); i++)
     {
-        MainWindowTableItem *test = folder->visibleTableItems.at(i);
+        int key = folder->visibleTableItems.keys().at(i);
+        MainWindowTableItem *test = folder->visibleTableItems.value(key);
         TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                  test->status->relativeFileName,
                                                  DBManager::GetRunName(run->runDescription->Num));
-
-        test->results.insert(run->runDescription->Num, r);
+        if( r != nullptr) { test->results.insert(run->runDescription->Num, r); }
     }
 }
 
@@ -215,7 +293,7 @@ void MainWindowModel::LoadTestResults(MainWindowTreeFolder *folder, MainWindowTa
         TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                                  test->status->relativeFileName,
                                                  DBManager::GetRunName(runNum));
-        test->results.insert(runNum, r);
+        if(r != nullptr ) { test->results.insert(runNum, r); }
     }
 }
 
@@ -232,7 +310,7 @@ void MainWindowModel::LoadOneResult(MainWindowTreeFolder *folder, MainWindowTabl
     TestResult *r = DBManager::GetTestResult(tc->fullFileName,
                                              test->status->relativeFileName,
                                              DBManager::GetRunName(run->runDescription->Num));
-    test->results.insert(run->runDescription->Num, r);
+    if(r != nullptr ) { test->results.insert(run->runDescription->Num, r); }
 }
 
 void MainWindowModel::DeleteTree()

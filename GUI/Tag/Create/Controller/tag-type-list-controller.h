@@ -11,13 +11,10 @@ public:
     TagTypeListController();
     void Init(QStringList *d);
 
-    // QAbstractItemModel interface
+// QAbstractItemModel interface
 public:
     int rowCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role) const;
-
-    void beginResetModel();
-    void endResetModel();
 
 private:
     QStringList *dataSource;

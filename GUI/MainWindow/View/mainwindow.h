@@ -40,6 +40,7 @@ private slots:
     void on_testTreeViewSelectionChanged(const QItemSelection& newSelection, const QItemSelection& oldSelection);
     void on_testTreeView_customContextMenuRequested(const QPoint &pos);
     void on_testTableViewSelectionChanged(const QItemSelection& newSelection, const QItemSelection& oldSelection);
+    void on_testTableHeaderClicked(int arg1);
     void on_leftCompareComboBox_activated(int index);
     void on_rightCompareComboBox_activated(int index);
 
@@ -95,14 +96,11 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    QModelIndex bakupTreeIndex;
+    QModelIndex backupTreeIndex;
     void saveTreeState();
     void saveExpandedState(QModelIndex &index);
     void loadTreeState();
     void loadExpandedState(QModelIndex &index);
-
-    TestTreeAdapter testTreeAdapter;
-    TestTableAdapter testTableAdapter;
 
     QMap<QString, IResultCompareWidget *> compareWidgets;
 
@@ -114,10 +112,10 @@ private:
 
     void updateComparePanel(int index, QComboBox *compareComboBox, QPlainTextEdit *logBox, QLabel *infoLabel,
                             QCheckBox *perfectBox, QCheckBox *theBestBox, SideOfCompareWidget sideOfCompareWidget);
+    void updateTestStatus(int runNum, QString newStatus, bool checked);
+    void updateTagList(MainWindowTableItem *tableItem);
 
-    void AttachTag();
-
-    void UpdateTestStatus(int runNum, QString newStatus, bool checked);
+    void attachTag();
 
     QMap<int, MainWindowTableHeader *> *compareComboBox_dataSource = nullptr;
 

@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <QtXml/QDomDocument>
 #include <QDateTime>
+#include <QMap>
 
 enum PlanStatus { Wating = 0, Prosessing = 1, Finished = 2, Pause = 3 };
 

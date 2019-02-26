@@ -400,12 +400,13 @@ void RunManager::beginTest(PlanQueueItem *plan)
         if((ts != nullptr) && (ts->benchmarks.keys().count() > 0))
         {
             int lastBenchmarkRunNum = ts->benchmarks.keys().last();
-            tstInf->testResult.benchmarkRunMark = DBManager::GetRunName(lastBenchmarkRunNum);
-            tstInf->testResult.benchmarkOutMark = ts->benchmarks.value(lastBenchmarkRunNum).outMark;
-            tstInf->testResult.benchmarkStatus = ts->benchmarks.value(lastBenchmarkRunNum).status;
+            tstInf->testResult.benchmark = new TestCompareResult();
+            tstInf->testResult.benchmark->runMark = DBManager::GetRunName(lastBenchmarkRunNum);
+            tstInf->testResult.benchmark->outMark = ts->benchmarks.value(lastBenchmarkRunNum).outMark;
+            tstInf->testResult.benchmark->status = ts->benchmarks.value(lastBenchmarkRunNum).status;
             tstInf->benchmarkOutputFullFolderName =
                     DBManager::GetOutFolder(plan->processedTestCaseFullFileName,
-                                            tstInf->testName, tstInf->testResult.benchmarkOutMark);
+                                            tstInf->testName, tstInf->testResult.benchmark->outMark);
         }
 
         if(ts != nullptr) { delete ts; }
@@ -414,11 +415,25 @@ void RunManager::beginTest(PlanQueueItem *plan)
 
     if(plan->processedTestCaseCompressionLevel > 1)
     {
-        TestResult *tr =
-                DBManager::GetTestResult(plan->processedTestCaseFullFileName, tstInf->testName,
-                                                  DBManager::GetRunName(plan->processedTestCaseRunName.toInt() - 1));
+        TestResult *tr = nullptr;
+        QString previousRunMark;
+
+        int previousRun = plan->processedTestCaseRunName.toInt();
+        while((previousRun > 1) && (tr == nullptr)) {
+            --previousRun;
+            previousRunMark = DBManager::GetRunName(previousRun);
+            tr = DBManager::GetTestResult(plan->processedTestCaseFullFileName, tstInf->testName, previousRunMark);
+            if(tr->exitCode != 0) {
+                delete tr;
+                tr = nullptr;
+            }
+        }
+
         if(tr != nullptr)
         {
+            tstInf->testResult.previous = new TestCompareResult();
+            tstInf->testResult.previous->runMark = previousRunMark;
+            tstInf->testResult.previous->outMark = tr->outMark;
             tstInf->previousOutputFullFolderName =
                     DBManager::GetOutFolder(plan->processedTestCaseFullFileName, tstInf->testName, tr->outMark);
             delete tr;
@@ -473,7 +488,7 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
                   plan->processedTestCaseFullFileName,plan->processedTestCaseRunName,testInfo->testName,"log")).remove();
     }
 
-    if((testInfo->compressionLevel != 0) && (testInfo->testResult.benchmarkCompareResult == -1) && (testInfo->testResult.exitCode == 0))
+    if((testInfo->compressionLevel != 0) && (testInfo->testResult.benchmark == nullptr) && (testInfo->testResult.exitCode == 0))
     {
         //Run was success but benchmark not found, so current result set as the best benchmark
         int runNum = plan->processedTestCaseRunName.toInt();
@@ -481,6 +496,15 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
         BenchmarkInfo benchmarkInfo;
         benchmarkInfo.status = "thebest";
         benchmarkInfo.outMark = testInfo->testResult.outMark;
+
+        int outStatusIndex;
+        QString testStatusDescription;
+        testInfo->comparator->CalculateStatusIndex(testInfo->testResult.exitStatus, testInfo->testResult.exitCode, testInfo->testResult.execTimeMs,
+                   testInfo->consoleOutput, testInfo->outputFullFolderName, nullptr, nullptr,
+                   ITestOutputComparator::BenchmarkStatus::THE_BEST_BENCHMARK_CREATED,
+                   outStatusIndex, benchmarkInfo.comment);
+
+        testInfo->comparator->GetTestStatus(outStatusIndex, benchmarkInfo.label, benchmarkInfo.color, testStatusDescription);
 
         TestStatus *ts = DBManager::GetTestStatus(plan->processedTestCaseFullFileName, testInfo->testName);
         if(ts != nullptr)
@@ -494,7 +518,7 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
     DBManager::SaveTestResult(plan->processedTestCaseFullFileName, plan->processedTestCaseRunName,
                               testInfo->testName, &(testInfo->testResult));
 
-    QString statisticsKey = testInfo->testResult.status + " " + testInfo->testResult.color.name();
+    QString statisticsKey = testInfo->testResult.label + " " + testInfo->testResult.color.name();
     plan->processedTestCaseStatistics[statisticsKey] = plan->processedTestCaseStatistics[statisticsKey] + 1;
 }
 

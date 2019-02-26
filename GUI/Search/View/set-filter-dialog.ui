@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>831</width>
-    <height>713</height>
+    <height>506</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,10 +22,7 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
-   <property name="spacing">
-    <number>0</number>
-   </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QHBoxLayout" name="markHorizontalLayout">
      <property name="spacing">
@@ -58,6 +55,9 @@
      </item>
      <item>
       <widget class="QComboBox" name="markComboBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -76,6 +76,9 @@
          <height>22</height>
         </size>
        </property>
+       <property name="editable">
+        <bool>false</bool>
+       </property>
        <item>
         <property name="text">
          <string>checked</string>
@@ -90,6 +93,9 @@
      </item>
      <item>
       <widget class="QLabel" name="markLabel">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -120,11 +126,11 @@
      <property name="spacing">
       <number>20</number>
      </property>
-     <property name="topMargin">
-      <number>20</number>
-     </property>
      <item>
       <widget class="QComboBox" name="nameOrAndBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -182,6 +188,9 @@
      </item>
      <item>
       <widget class="QComboBox" name="nameComboBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -208,96 +217,53 @@
     </layout>
    </item>
    <item>
-    <layout class="QGridLayout" name="gridLayout">
-     <property name="topMargin">
-      <number>20</number>
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="statusFooterHorizontalLayout">
      <property name="spacing">
       <number>20</number>
      </property>
-     <item row="1" column="0">
-      <widget class="QComboBox" name="difTheBestOrAndBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="deepLabel">
+       <property name="enabled">
+        <bool>true</bool>
        </property>
-       <property name="minimumSize">
-        <size>
-         <width>75</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>75</width>
-         <height>22</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string>AND</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>OR</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QComboBox" name="diffPreviousEqualComboBox">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>22</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string>=</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>&lt;</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>&gt;</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>!=</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QCheckBox" name="exitCodeCheckBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>22</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Exit code:</string>
+        <string>Deep:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QSpinBox" name="exitCodeSpinBox">
+     <item>
+      <widget class="QSpinBox" name="deepSpinBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -317,254 +283,15 @@
         </size>
        </property>
        <property name="minimum">
-        <number>-2147483647</number>
+        <number>1</number>
        </property>
-       <property name="maximum">
-        <number>2147483647</number>
-       </property>
-       <property name="displayIntegerBase">
-        <number>10</number>
+       <property name="value">
+        <number>1</number>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QComboBox" name="diffPreviousOrAndBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>75</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>75</width>
-         <height>22</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string>AND</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>OR</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="2" column="3">
-      <widget class="QSpinBox" name="diffPreviousSpinBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>100</width>
-         <height>11</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="minimum">
-        <number>-2147483647</number>
-       </property>
-       <property name="maximum">
-        <number>2147483647</number>
-       </property>
-       <property name="displayIntegerBase">
-        <number>10</number>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QComboBox" name="exitCodeEqualComboBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>22</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string>=</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>&lt;</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>&gt;</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>!=</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QComboBox" name="diffTheBestEqualComboBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>22</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string>=</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>&lt;</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>&gt;</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>!=</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QSpinBox" name="diffTheBestSpinBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>100</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="minimum">
-        <number>-2147483647</number>
-       </property>
-       <property name="maximum">
-        <number>2147483647</number>
-       </property>
-       <property name="displayIntegerBase">
-        <number>10</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="diffTheBestCheckBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Difference from the best result:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="diffPreviousCheckBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Difference from previous result:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QComboBox" name="exitCodeOrAndBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>75</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>75</width>
-         <height>22</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string>AND</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>OR</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="0" column="4">
-      <spacer name="exitCodeHorizontalSpacer">
+     <item>
+      <spacer name="horizontalSpacer_4">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -579,18 +306,495 @@
     </layout>
    </item>
    <item>
-    <widget class="QSplitter" name="tagStatusSplitter">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>2</number>
      </property>
-     <property name="childrenCollapsible">
-      <bool>false</bool>
-     </property>
-     <widget class="QWidget" name="layoutWidget_1">
-      <layout class="QVBoxLayout" name="tagVerticalLayout">
+     <widget class="QWidget" name="tabResult">
+      <attribute name="title">
+       <string>Difference</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
        <property name="topMargin">
         <number>20</number>
        </property>
+       <property name="verticalSpacing">
+        <number>20</number>
+       </property>
+       <item row="1" column="1">
+        <widget class="QCheckBox" name="exitCodeCheckBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Exit code:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QSpinBox" name="diffTheBestSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="minimum">
+          <number>-2147483647</number>
+         </property>
+         <property name="maximum">
+          <number>2147483647</number>
+         </property>
+         <property name="displayIntegerBase">
+          <number>10</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QCheckBox" name="diffTheBestCheckBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Difference from the best result:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QComboBox" name="diffTheBestOrAndBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>AND</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>OR</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QComboBox" name="diffTheBestEqualComboBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>==</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>&lt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>&gt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>!=</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QComboBox" name="exitCodeOrAndBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>AND</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>OR</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="changedCheckBox">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Tests which result changed</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QComboBox" name="exitCodeEqualComboBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>==</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>&lt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>&gt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>!=</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QComboBox" name="changedOrAndBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>AND</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>OR</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QSpinBox" name="exitCodeSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="minimum">
+          <number>-2147483647</number>
+         </property>
+         <property name="maximum">
+          <number>2147483647</number>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="displayIntegerBase">
+          <number>10</number>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="3" column="0">
+        <widget class="QComboBox" name="diffPreviousOrAndBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>AND</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>OR</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="diffPreviousCheckBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Difference from previous result:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QComboBox" name="diffPreviousEqualComboBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>22</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>==</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>&lt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>&gt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>!=</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="3" column="3">
+        <widget class="QSpinBox" name="diffPreviousSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>11</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="minimum">
+          <number>-2147483647</number>
+         </property>
+         <property name="maximum">
+          <number>2147483647</number>
+         </property>
+         <property name="displayIntegerBase">
+          <number>10</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabTag">
+      <attribute name="title">
+       <string>Tag</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
         <layout class="QHBoxLayout" name="tagCaptionHorizontalLayout">
          <property name="spacing">
@@ -598,6 +802,9 @@
          </property>
          <item>
           <widget class="QComboBox" name="tagOrAndBox">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -631,7 +838,7 @@
          <item>
           <widget class="QCheckBox" name="tagCheckBox">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -641,25 +848,50 @@
            </property>
           </widget>
          </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </item>
        <item>
-        <widget class="QSplitter" name="tagTreeTableSplitter">
+        <widget class="QSplitter" name="tagCollectionSplitter">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <widget class="QTableView" name="tagTableView">
+         <widget class="QTreeView" name="tagTreeView">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-            <horstretch>25</horstretch>
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <attribute name="headerVisible">
+           <bool>false</bool>
+          </attribute>
          </widget>
-         <widget class="QTreeView" name="tagTreeView">
+         <widget class="QStackedWidget" name="tagItemWidgetsStack">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>75</horstretch>
+            <horstretch>70</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
@@ -668,21 +900,30 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="layoutWidget_2">
-      <layout class="QVBoxLayout" name="statusVerticalLayout">
-       <property name="topMargin">
-        <number>20</number>
-       </property>
-       <property name="bottomMargin">
-        <number>20</number>
-       </property>
+     <widget class="QWidget" name="tabStatus">
+      <attribute name="title">
+       <string>Status</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <layout class="QHBoxLayout" name="statusCaptionHorizontalLayout">
          <property name="spacing">
           <number>20</number>
          </property>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMinimumSize</enum>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QComboBox" name="statusOrAndBox">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -716,7 +957,7 @@
          <item>
           <widget class="QCheckBox" name="statusCheckBox">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -726,98 +967,64 @@
            </property>
           </widget>
          </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </item>
        <item>
-        <widget class="QTableView" name="statusTableView"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="statusFooterHorizontalLayout">
-         <property name="spacing">
-          <number>20</number>
+        <widget class="QSplitter" name="splitter">
+         <property name="enabled">
+          <bool>true</bool>
          </property>
-         <property name="topMargin">
-          <number>0</number>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="bottomMargin">
-          <number>0</number>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <item>
-          <widget class="QLabel" name="deepLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Deep:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="deepSpinBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>100</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="value">
-            <number>1</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="newStatusCheckBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Only new</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         <widget class="QListView" name="testCaseListView">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>30</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+         <widget class="QTableView" name="statusTableView">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>70</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -828,13 +1035,13 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>32</height>
+       <height>40</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>32</height>
+       <height>40</height>
       </size>
      </property>
      <property name="orientation">

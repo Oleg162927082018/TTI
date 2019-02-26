@@ -31,13 +31,3 @@ QVariant TagTypeListController::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 }
-
-void TagTypeListController::beginResetModel()
-{
-    QAbstractListModel::beginResetModel();
-}
-
-void TagTypeListController::endResetModel()
-{
-    QAbstractListModel::endResetModel();
-}

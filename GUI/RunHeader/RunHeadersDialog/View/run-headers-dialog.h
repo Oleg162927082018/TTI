@@ -28,6 +28,8 @@ private slots:
     void on_setFilterBtn_clicked();
     void on_clearFilterBtn_clicked();
 
+    void on_runDescriptionTableHeaderClicked(int arg1);
+
 private:
     Ui::RunHeadersDialog *ui;
 

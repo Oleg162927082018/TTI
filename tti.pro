@@ -1,4 +1,4 @@
-VERSION = 2.2.0.0
+VERSION = 2.4.0.0
 QMAKE_TARGET_PRODUCT = Total Test Integrator
 QMAKE_TARGET_DESCRIPTION = Test-case integrator
 QMAKE_TARGET_COPYRIGHT = Copyright\xA9 Oleg Kopyev 2016-2017
@@ -36,14 +36,10 @@ SOURCES += main.cpp\
     GUI/TestCase/Open/Model/open-testcase-model.cpp \
     GUI/TestCase/Open/Controller/open-test-case-list-controller.cpp \
     TagManager/tagmanager.cpp \
-    GUI/Tag/Dispatcher/Controller/tag-collection-tree-adapter.cpp \
     GUI/Tag/Create/View/tag-create-dialog.cpp \
     GUI/Tag/Edit/View/tag-edit-dialog.cpp \
     GUI/Tag/Create/Controller/tag-type-list-controller.cpp \
     GUI/Tag/Create/View/tag-create-empty-widget.cpp \
-    GUI/Tag/Dispatcher/View/tag-view-collection-widget.cpp \
-    GUI/Tag/Dispatcher/View/tag-view-folder-widget.cpp \
-    GUI/Tag/Dispatcher/View/tag-view-unknown-widget.cpp \
     GUI/Tag/Dispatcher/View/tag-dispatcher-dialog.cpp \
     GUI/Tag/View/View/tag-view-dialog.cpp \
     HelpManager/helpdialog.cpp \
@@ -53,7 +49,21 @@ SOURCES += main.cpp\
     GUI/TestCase/Open/Controller/open-testcase-rundescriptions-controller.cpp \
     GUI/RunHeader/RunHeadersDialog/Controller/run-headers-table-controller.cpp \
     GUI/RunHeader/RunHeadersDialog/View/run-headers-dialog.cpp \
-    GUI/MainWindow/View/mainwindow-menu.cpp
+    GUI/MainWindow/View/mainwindow-menu.cpp \
+    GUI/Search/View/set-filter-tag-unknown-widget.cpp \
+    GUI/Search/View/set-filter-tag-folder-widget.cpp \
+    GUI/Search/View/set-filter-tag-collection-widget.cpp \
+    GUI/Search/Model/set-filter-dialog-model.cpp \
+    GUI/Tag/Dispatcher/Model/tag-dispatcher-model.cpp \
+    GUI/Tag/Dispatcher/Controller/tag-dispatcher-tree-adapter.cpp \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-collection-widget.cpp \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-folder-widget.cpp \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-unknown-widget.cpp \
+    GUI/Tag/Create/View/tag-folder-create-dialog.cpp \
+    GUI/Tag/Create/View/tag-collection-create-dialog.cpp \
+    GUI/Search/Controller/set-filter-tag-tree-adapter.cpp \
+    GUI/Search/Controller/set-filter-testcase-list-adapter.cpp \
+    GUI/Search/Controller/set-filter-status-table-adapter.cpp
 
 HEADERS  += GUI/MainWindow/View/mainwindow.h \
     Common/itestcasetemplate.h \
@@ -86,15 +96,11 @@ HEADERS  += GUI/MainWindow/View/mainwindow.h \
     GUI/TestCase/Open/Model/open-testcase-model.h \
     GUI/TestCase/Open/Controller/open-test-case-list-controller.h \
     TagManager/tagmanager.h \
-    GUI/Tag/Dispatcher/Controller/tag-collection-tree-adapter.h \
     Common/DBManager/tag-collection.h \
     GUI/Tag/Create/View/tag-create-dialog.h \
     GUI/Tag/Edit/View/tag-edit-dialog.h \
     GUI/Tag/Create/Controller/tag-type-list-controller.h \
     GUI/Tag/Create/View/tag-create-empty-widget.h \
-    GUI/Tag/Dispatcher/View/tag-view-folder-widget.h \
-    GUI/Tag/Dispatcher/View/tag-view-collection-widget.h \
-    GUI/Tag/Dispatcher/View/tag-view-unknown-widget.h \
     GUI/Tag/Dispatcher/View/tag-dispatcher-dialog.h \
     GUI/Tag/View/View/tag-view-dialog.h \
     HelpManager/helpdialog.h \
@@ -109,7 +115,24 @@ HEADERS  += GUI/MainWindow/View/mainwindow.h \
     GUI/MainWindow/Model/mainwindow-tableheader.h \
     GUI/RunHeader/RunHeadersDialog/View/run-headers-dialog.h \
     GUI/RunHeader/RunHeadersDialog/Controller/run-headers-table-controller.h \
-    GUI/RunHeader/RunHeadersDialog/Model/run-header-item.h
+    GUI/RunHeader/RunHeadersDialog/Model/run-header-item.h \
+    GUI/Search/View/set-filter-tag-unknown-widget.h \
+    GUI/Search/View/set-filter-tag-folder-widget.h \
+    GUI/Search/View/set-filter-tag-collection-widget.h \
+    GUI/Search/Model/set-filter-dialog-model.h \
+    GUI/Search/Model/set-filter-tag-item.h \
+    GUI/Tag/Dispatcher/Model/tag-dispatcher-model.h \
+    GUI/Tag/Dispatcher/Model/tag-dispatcher-item.h \
+    GUI/Tag/Dispatcher/Controller/tag-dispatcher-tree-adapter.h \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-collection-widget.h \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-folder-widget.h \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-unknown-widget.h \
+    GUI/Tag/Create/View/tag-folder-create-dialog.h \
+    GUI/Tag/Create/View/tag-collection-create-dialog.h \
+    GUI/Search/Controller/set-filter-tag-tree-adapter.h \
+    GUI/Search/Model/set-filter-status-collection.h \
+    GUI/Search/Controller/set-filter-testcase-list-adapter.h \
+    GUI/Search/Controller/set-filter-status-table-adapter.h
 
 FORMS    += GUI/MainWindow/View/mainwindow.ui \
     GUI/Run/PlanDispatcher-New/View/plan-new-testcase-override-widget.ui \
@@ -124,14 +147,19 @@ FORMS    += GUI/MainWindow/View/mainwindow.ui \
     GUI/Tag/Create/View/tag-create-dialog.ui \
     GUI/Tag/Edit/View/tag-edit-dialog.ui \
     GUI/Tag/Create/View/tag-create-empty-widget.ui \
-    GUI/Tag/Dispatcher/View/tag-view-collection-widget.ui \
-    GUI/Tag/Dispatcher/View/tag-view-folder-widget.ui \
-    GUI/Tag/Dispatcher/View/tag-view-unknown-widget.ui \
     GUI/Tag/Dispatcher/View/tag-dispatcher-dialog.ui \
     GUI/Tag/View/View/tag-view-dialog.ui \
     HelpManager/helpdialog.ui \
     GUI/Search/View/set-filter-dialog.ui \
-    GUI/RunHeader/RunHeadersDialog/View/run-headers-dialog.ui
+    GUI/RunHeader/RunHeadersDialog/View/run-headers-dialog.ui \
+    GUI/Search/View/set-filter-tag-unknown-widget.ui \
+    GUI/Search/View/set-filter-tag-folder-widget.ui \
+    GUI/Search/View/set-filter-tag-collection-widget.ui \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-collection-widget.ui \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-folder-widget.ui \
+    GUI/Tag/Dispatcher/View/tag-dispatcher-unknown-widget.ui \
+    GUI/Tag/Create/View/tag-folder-create-dialog.ui \
+    GUI/Tag/Create/View/tag-collection-create-dialog.ui
 
 RESOURCES +=
 
@@ -139,4 +167,5 @@ DISTFILES += \
     FAQ/Others.txt \
     toDo.txt \
     FAQ/Containers.txt \
-    FAQ/Cast.txt
+    FAQ/Cast.txt \
+    FAQ/Tags.txt

@@ -30,13 +30,3 @@ QVariant TestCaseTemplateListAdapter::data(const QModelIndex &index, int role) c
         return QVariant();
     }
 }
-
-void TestCaseTemplateListAdapter::beginResetModel()
-{
-    QAbstractListModel::beginResetModel();
-}
-
-void TestCaseTemplateListAdapter::endResetModel()
-{
-    QAbstractListModel::endResetModel();
-}

@@ -11,7 +11,7 @@
 
 struct MainWindowTreeFolder
 {
-    bool checked = true;
+    int checkState = Qt::Checked;
     bool expanded = false;
     QString name;
 
@@ -24,7 +24,7 @@ struct MainWindowTreeFolder
 
 
     QList<MainWindowTableItem *> fullTableItems;
-    QList<MainWindowTableItem *> visibleTableItems;
+    QMap<int, MainWindowTableItem *> visibleTableItems;
 
 };
 

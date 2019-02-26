@@ -9,6 +9,10 @@ RunHeadersDialog::RunHeadersDialog(QWidget *parent) :
 
     runHeadersTableController.setDataSource(&visibleHeadersData);
     ui->runDescriptionTable->setModel(&runHeadersTableController);
+
+    connect(ui->runDescriptionTable->horizontalHeader(), SIGNAL(sectionClicked(int)),
+            this, SLOT(on_runDescriptionTableHeaderClicked(int)));
+
 }
 
 RunHeadersDialog::~RunHeadersDialog()
@@ -90,4 +94,12 @@ void RunHeadersDialog::on_clearFilterBtn_clicked()
     }
 
     runHeadersTableController.endResetModel();
+}
+
+void RunHeadersDialog::on_runDescriptionTableHeaderClicked(int arg1)
+{
+    if(arg1 == 0)
+    {
+        runHeadersTableController.setAllChecked();
+    }
 }

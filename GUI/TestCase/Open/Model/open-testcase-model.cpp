@@ -59,11 +59,6 @@ void OpenTestCaseModel::addTestCase(QString testCaseFileName)
 void OpenTestCaseModel::removeTestCase(int ind)
 {
     OpenTestCaseItem *tcItem = itemList.at(ind);
-    if(curItem == tcItem)
-    {
-        curItem = nullptr;
-    }
-
     for(int i = 0; i < tcItem->fullRunDescriptions.count(); i++)
     {
         OpenTestCaseRunItem *runItem = tcItem->fullRunDescriptions.values().at(i);

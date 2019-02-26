@@ -4,25 +4,35 @@
 #include <QString>
 #include <QColor>
 
+#include <../TTI/Common/itestcasetemplate.h>
+
+struct TestCompareResult
+{
+    QString status;
+    QString runMark;
+    QString outMark;
+    int compareResult;
+};
+
 struct TestResult
 {
+    ~TestResult() {
+        if(benchmark != nullptr) { delete benchmark; }
+        if(previous != nullptr) { delete previous; }
+    }
+
     QString outMark;
 
-    QString benchmarkStatus;
-    QString benchmarkRunMark;
-    QString benchmarkOutMark;
-    int benchmarkCompareResult;
+    TestCompareResult *benchmark = nullptr;
+    TestCompareResult *previous = nullptr;
 
-    QString previousRunMark;
-    QString previousOutMark;
-    int previousCompareResult;
-
-    QString exitStatus;
+    ITestOutputComparator::ExitStatus exitStatus;
     int exitCode;
 
     qint64 execTimeMs;
 
-    QString status;
+    QString label;
+    QString comment;
     QColor color;
 };
 

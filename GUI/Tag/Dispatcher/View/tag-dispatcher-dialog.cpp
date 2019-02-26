@@ -1,16 +1,19 @@
 #include "tag-dispatcher-dialog.h"
 #include "ui_tag-dispatcher-dialog.h"
 
-#include "tag-view-unknown-widget.h"
-#include "tag-view-collection-widget.h"
-#include "tag-view-folder-widget.h"
-#include "../../../Tag/Create/View/tag-create-dialog.h"
-#include "../../../Tag/Edit/View/tag-edit-dialog.h"
+#include "tag-dispatcher-unknown-widget.h"
+#include "tag-dispatcher-collection-widget.h"
+#include "tag-dispatcher-folder-widget.h"
+
+#include <GUI/Tag/Create/View/tag-collection-create-dialog.h>
+#include <GUI/Tag/Create/View/tag-folder-create-dialog.h>
+#include "GUI/Tag/Create/View/tag-create-dialog.h"
+#include "GUI/Tag/Edit/View/tag-edit-dialog.h"
 
 #include <QDir>
-#include <QFileDialog>
-#include <QInputDialog>
 #include <QMessageBox>
+#include <QStack>
+
 
 TagDispatcherDialog::TagDispatcherDialog(int action, QWidget *parent) :
     QDialog(parent), ui(new Ui::TagDispatcherDialog)
@@ -26,6 +29,7 @@ TagDispatcherDialog::TagDispatcherDialog(int action, QWidget *parent) :
     {
         case TagDispatcherDialog::ACTION_SELECT:
             ui->closeBtn->setVisible(false);
+            ui->cancelBtn->setVisible(true);
             ui->okBtn->setDefault(true);
             break;
         case TagDispatcherDialog::ACTION_EDIT:
@@ -37,22 +41,24 @@ TagDispatcherDialog::TagDispatcherDialog(int action, QWidget *parent) :
             break;
     }
 
-    ui->tagTreeView->setModel(&tagCollectionTreeAdapter);
+    model.Init();
+    treeAdapter.InitDataSource(&(model.tagCollections));
+    ui->tagTreeView->setModel(&treeAdapter);
 
     connect(ui->tagTreeView->selectionModel(),
           SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
           this, SLOT(on_tagTreeViewSelectionChanged(QItemSelection,QItemSelection)));
 
-    TagViewUnknownWidget *tagViewUnknownWidget = new TagViewUnknownWidget();
-    tagDisplayWidgetBuffer.insert("unknown", tagViewUnknownWidget);
+    TagDispatcherUnknownWidget *tagViewUnknownWidget = new TagDispatcherUnknownWidget();
+    widgetBuffer.insert("unknown", tagViewUnknownWidget);
     ui->tagItemWidgetsStack->addWidget(tagViewUnknownWidget);
 
-    TagViewCollectionWidget *tagViewCollectionWidget = new TagViewCollectionWidget();
-    tagDisplayWidgetBuffer.insert("collection", tagViewCollectionWidget);
+    TagDispatcherCollectionWidget *tagViewCollectionWidget = new TagDispatcherCollectionWidget();
+    widgetBuffer.insert("collection", tagViewCollectionWidget);
     ui->tagItemWidgetsStack->addWidget(tagViewCollectionWidget);
 
-    TagViewFolderWidget *tagViewFolderWidget = new TagViewFolderWidget();
-    tagDisplayWidgetBuffer.insert("folder", tagViewFolderWidget);
+    TagDispatcherFolderWidget *tagViewFolderWidget = new TagDispatcherFolderWidget();
+    widgetBuffer.insert("folder", tagViewFolderWidget);
     ui->tagItemWidgetsStack->addWidget(tagViewFolderWidget);
 
     QStringList tagTemplateIDs = TagManager::GetTagAdapterIDList();
@@ -61,12 +67,15 @@ TagDispatcherDialog::TagDispatcherDialog(int action, QWidget *parent) :
         QString key = tagTemplateIDs.at(i);
         ITagAdapter *adapter = TagManager::GetTagAdapter(key);
         ITagWidget *tagWidget = adapter->GetTagViewWidget(this);
-        tagDisplayWidgetBuffer.insert(key, tagWidget);
+        widgetBuffer.insert(key, tagWidget);
         if(tagWidget != nullptr)
         {
             ui->tagItemWidgetsStack->addWidget(tagWidget);
         }
     }
+
+    QModelIndex firstTagIndex = treeAdapter.index(0,0);
+    ui->tagTreeView->setCurrentIndex(firstTagIndex);
 
     //Create context menu for tag tree
     //Create, Load, Remove, Delete - collection
@@ -79,49 +88,46 @@ TagDispatcherDialog::~TagDispatcherDialog()
     delete ui;
 }
 
-TagItem *TagDispatcherDialog::getSelectResult()
+TagDispatcherItem *TagDispatcherDialog::getSelectedResult()
 {
-    return selectResult;
+    return selectedResult;
 }
 
 void TagDispatcherDialog::on_tagTreeViewSelectionChanged(const QItemSelection &newSelection, const QItemSelection &oldSelection)
 {
-    if(!isDialogUpdating)
+    if(newSelection.length() > 0)
     {
-        if(newSelection.length() > 0)
+        QModelIndex newSelectionFirstIndex = newSelection.at(0).indexes().at(0);
+        TagDispatcherItem *item = static_cast<TagDispatcherItem*>(newSelectionFirstIndex.internalPointer());
+
+        QString config;
+
+        if(item->tag != nullptr)
         {
-            QModelIndex newSelectionFirstIndex = newSelection.at(0).indexes().at(0);
-            TagItem *item = static_cast<TagItem*>(newSelectionFirstIndex.internalPointer());
-
-            QString config;
-
-            if(item->tag != nullptr)
+            QWidget *widget = widgetBuffer.value(item->tag->type);
+            if(widget == nullptr)
             {
-                QWidget *widget = tagDisplayWidgetBuffer.value(item->tag->type);
-                if(widget == nullptr)
-                {
-                    widget = tagDisplayWidgetBuffer.value("unknown");
-                }
-                else
-                {
-                    ITagWidget *tagWidget = static_cast<ITagWidget *>(widget);
-                    tagWidget->SetData(config, item->tag->data);
-                }
-
-                ui->tagItemWidgetsStack->setCurrentWidget(widget);
-            }
-            else if(item->folder != nullptr)
-            {
-                TagViewFolderWidget *widget = static_cast<TagViewFolderWidget *>(tagDisplayWidgetBuffer.value("folder"));
-                widget->setData(item->folder->description);
-                ui->tagItemWidgetsStack->setCurrentWidget(widget);
+                widget = widgetBuffer.value("unknown");
             }
             else
             {
-                TagViewCollectionWidget *widget = static_cast<TagViewCollectionWidget *>(tagDisplayWidgetBuffer.value("collection"));
-                widget->setData(item->collection->description);
-                ui->tagItemWidgetsStack->setCurrentWidget(widget);
+                ITagWidget *tagWidget = static_cast<ITagWidget *>(widget);
+                tagWidget->SetData(config, item->tag->data);
             }
+
+            ui->tagItemWidgetsStack->setCurrentWidget(widget);
+        }
+        else if(item->folder != nullptr)
+        {
+            TagDispatcherFolderWidget *widget = static_cast<TagDispatcherFolderWidget *>(widgetBuffer.value("folder"));
+            widget->setData(item->folder->description);
+            ui->tagItemWidgetsStack->setCurrentWidget(widget);
+        }
+        else
+        {
+            TagDispatcherCollectionWidget *widget = static_cast<TagDispatcherCollectionWidget *>(widgetBuffer.value("collection"));
+            widget->setData(item->collection->description);
+            ui->tagItemWidgetsStack->setCurrentWidget(widget);
         }
     }
 }
@@ -130,67 +136,80 @@ void TagDispatcherDialog::saveTreeState()
 {
     currentIndex = ui->tagTreeView->currentIndex();
 
-    int tagCollections = TagManager::GetTagCollectionCount();
-    if(tagCollections > 0)
+    for(int i = 0; i < model.tagCollections.length(); i++)
     {
-        for(int i = 0; i < tagCollections; i++)
-        {
-            QModelIndex rootIndex = tagCollectionTreeAdapter.index(i, 0);
-            saveExpandedState(rootIndex);
-        }
+        QModelIndex rootIndex = treeAdapter.index(i, 0);
+        saveExpandedState(rootIndex);
     }
 }
 
 void TagDispatcherDialog::saveExpandedState(QModelIndex &index)
 {
-    TagItem* item = static_cast<TagItem*>(index.internalPointer());
+    TagDispatcherItem* item = static_cast<TagDispatcherItem*>(index.internalPointer());
     item->expanded = ui->tagTreeView->isExpanded(index);
 
     for(int i = 0; i < item->subItems.length(); i++)
     {
-        QModelIndex subIndex = tagCollectionTreeAdapter.index(i, 0, index);
+        QModelIndex subIndex = treeAdapter.index(i, 0, index);
         saveExpandedState(subIndex);
     }
 }
 
-void TagDispatcherDialog::loadTreeState(QString name)
+void TagDispatcherDialog::loadTreeState(TagDispatcherItem *selectedItem)
 {
-    if(TagManager::GetTagCollectionCount() > 0)
+    for(int i = 0; i < model.tagCollections.length(); i++)
     {
-        for(int i = 0; i < TagManager::GetTagCollectionCount(); i++)
-        {
-            QModelIndex rootIndex = tagCollectionTreeAdapter.index(i,0);
-            loadExpandedState(rootIndex);
-        }
+        QModelIndex rootIndex = treeAdapter.index(i,0);
+        loadExpandedState(rootIndex);
+    }
 
-        if(name.isEmpty() || name.isNull())
+    if(selectedItem == nullptr)
+    {
+        if(currentIndex.isValid())
         {
-            if(currentIndex.isValid())
-            {
-                ui->tagTreeView->setCurrentIndex(currentIndex);
-            }
-            else
-            {
-                ui->tagTreeView->setCurrentIndex(tagCollectionTreeAdapter.index(0,0));
-            }
+            ui->tagTreeView->setCurrentIndex(currentIndex);
         }
         else
         {
-            ui->tagTreeView->setCurrentIndex(
-                        tagCollectionTreeAdapter.indexByParth(name));
+            ui->tagTreeView->setCurrentIndex(treeAdapter.index(0,0));
         }
     }
+    else
+    {
+        QStack<TagDispatcherItem *> parentItems;
+        TagDispatcherItem *parentItem = selectedItem;
+        while(parentItem != nullptr) {
+            parentItems.push(parentItem);
+            parentItem = parentItem->parent;
+        }
 
+        QModelIndex index;
+        while(!parentItems.isEmpty()) {
+            TagDispatcherItem *item = parentItems.pop();
+            if(item->parent == nullptr) {
+                int i = model.tagCollections.indexOf(item);
+                index = treeAdapter.index(i,0);
+                if(parentItems.isEmpty()) { ui->tagTreeView->setCurrentIndex(index); }
+                else { ui->tagTreeView->setExpanded(index, true); }
+
+            } else {
+                int i = item->parent->subItems.indexOf(item);
+                index = treeAdapter.index(i,0,index);
+                if(parentItems.isEmpty()) { ui->tagTreeView->setCurrentIndex(index); }
+                else { ui->tagTreeView->setExpanded(index, true); }
+            }
+        }
+    }
 }
 
 void TagDispatcherDialog::loadExpandedState(QModelIndex &index)
 {
-    TagItem* item = static_cast<TagItem*>(index.internalPointer());
+    TagDispatcherItem* item = static_cast<TagDispatcherItem*>(index.internalPointer());
     ui->tagTreeView->setExpanded(index, item->expanded);
 
     for(int i = 0; i < item->subItems.length(); i++)
     {
-        QModelIndex subIndex = tagCollectionTreeAdapter.index(i, 0, index);
+        QModelIndex subIndex = treeAdapter.index(i, 0, index);
         loadExpandedState(subIndex);
     }
 }
@@ -198,58 +217,72 @@ void TagDispatcherDialog::loadExpandedState(QModelIndex &index)
 void TagDispatcherDialog::on_newCollectionBtn_clicked()
 {
     //Create default folder for save tag collections
-    QDir tagFolder(qApp->applicationDirPath() + "/tag");
-    tagFolder.mkdir("data");
+    QDir tagFolder(qApp->applicationDirPath());
+    tagFolder.mkdir("tags");
 
     //Get file name for tag collection
-    QString tagCollectionFullFileName = QFileDialog::getSaveFileName(this, "New Tag collection",
-                               tagFolder.filePath("data"), "Tag collection (*.xml)");
+    TagCollectionCreateDialog dlg(this);
+    if(dlg.exec() == QDialog::Accepted) {
+        QString collectionFileName = dlg.collectionFileName();
+        QString collectionDescription = dlg.collectionDescription();
+        if (!collectionFileName.isEmpty())
+        {
+            saveTreeState();
+            treeAdapter.beginResetModel();
 
-    if(!tagCollectionFullFileName.isEmpty()&& !tagCollectionFullFileName.isNull())
-    {
-        saveTreeState();
-        BeginDialogUpdate();
-        tagCollectionTreeAdapter.beginResetModel();
+            TagDispatcherItem *newItem = model.NewTagCollection(collectionFileName, collectionDescription);
 
-        TagManager::CreateTagCollection(tagCollectionFullFileName);
-
-        tagCollectionTreeAdapter.endResetModel();
-        EndDialogUpdate();
-        loadTreeState(QFileInfo(tagCollectionFullFileName).baseName());
+            treeAdapter.endResetModel();
+            loadTreeState(newItem);
+        }
     }
-}
-
-void TagDispatcherDialog::BeginDialogUpdate()
-{
-    isDialogUpdating = true;
-}
-
-void TagDispatcherDialog::EndDialogUpdate()
-{
-    isDialogUpdating = false;
 }
 
 void TagDispatcherDialog::on_newFolderBtn_clicked()
 {
     QModelIndex index = ui->tagTreeView->currentIndex();
-    TagItem *tagItem = static_cast<TagItem*>(index.internalPointer());
+    TagDispatcherItem *tagItem = static_cast<TagDispatcherItem*>(index.internalPointer());
 
     if(tagItem->tag == nullptr)
     {
-        bool ok;
-        QString folderName = QInputDialog::getText(this, tr("New folder"), tr("Folder name:"), QLineEdit::Normal, "", &ok);
+        TagFolderCreateDialog dlg(this);
+        if(dlg.exec() == QDialog::Accepted) {
+            QString folderName = dlg.folderName();
+            QString folderDescription = dlg.folderDescription();
+            if (!folderName.isEmpty())
+            {
+                saveTreeState();
+                treeAdapter.beginResetModel();
 
-        if (ok && !folderName.isEmpty())
+                TagDispatcherItem *newItem = model.NewTagFolder(tagItem, folderName, folderDescription);
+
+                treeAdapter.endResetModel();
+                loadTreeState(newItem);
+            }
+        }
+    }
+}
+
+void TagDispatcherDialog::on_newTagBtn_clicked()
+{
+    QModelIndex index = ui->tagTreeView->currentIndex();
+    TagDispatcherItem *tagItem = static_cast<TagDispatcherItem*>(index.internalPointer());
+    if(tagItem->tag != nullptr) { tagItem = tagItem->parent; }
+
+    TagCreateDialog dlg(this);
+    if(dlg.exec() == QDialog::Accepted) {
+        QString tagID = dlg.tagID();
+        QString tagName = dlg.tagName();
+        QString tagData = dlg.tagData();
+        if (!tagName.isEmpty() && !tagID.isEmpty() && !tagData.isEmpty())
         {
             saveTreeState();
-            BeginDialogUpdate();
-            tagCollectionTreeAdapter.beginResetModel();
+            treeAdapter.beginResetModel();
 
-            TagItem *newItem = TagManager::CreateTagFolder(tagItem, folderName);
+            TagDispatcherItem *newItem = model.NewTag(tagItem, tagID, tagName, tagData);
 
-            tagCollectionTreeAdapter.endResetModel();
-            EndDialogUpdate();
-            loadTreeState(newItem->path);
+            treeAdapter.endResetModel();
+            loadTreeState(newItem);
         }
     }
 }
@@ -259,79 +292,50 @@ void TagDispatcherDialog::on_closeBtn_clicked()
     close();
 }
 
-QString TagDispatcherDialog::removeTagSubItems(TagItem *tagItem)
-{
-    for(int i = 0; i < tagItem->subItems.length(); i++)
-    {
-        removeTagSubItems(tagItem->subItems.at(i));
-    }
-
-    if(tagItem->tag != nullptr)
-    {
-
-        TagItem *parent = tagItem->parent;
-        parent->subItems.removeOne(tagItem);
-
-        TagItem *tagCollection = parent;
-        while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
-        TagManager::SaveTagCollection(tagCollection);
-
-        delete tagItem->tag;
-        delete tagItem;
-
-        return parent->path;
-    }
-
-    if(tagItem->folder != nullptr)
-    {
-        TagItem *parent = tagItem->parent;
-        parent->subItems.removeOne(tagItem);
-
-        TagItem *tagCollection = parent;
-        while(tagCollection->parent != nullptr) { tagCollection = tagCollection->parent; }
-        TagManager::SaveTagCollection(tagCollection);
-
-        delete tagItem->folder;
-        delete tagItem;
-
-        return parent->path;
-    }
-
-    if(tagItem->collection != nullptr)
-    {
-        TagManager::DeleteTagCollection(tagItem->collection->fullFileName);
-        delete tagItem->collection;
-        delete tagItem;
-
-        return "";
-    }
-
-    return nullptr;
-}
-
 void TagDispatcherDialog::on_removeBtn_clicked()
 {
     QModelIndex index = ui->tagTreeView->currentIndex();
-    TagItem *tagItem = static_cast<TagItem*>(index.internalPointer());
+    TagDispatcherItem *tagItem = static_cast<TagDispatcherItem*>(index.internalPointer());
 
-    QMessageBox mb("Confirmation",
-                   "Are you shure to remove element? Element will be deleted permanently.",
-                   QMessageBox::Question,
-                   QMessageBox::Ok | QMessageBox::Default,
-                   QMessageBox::Cancel,
-                   QMessageBox::NoButton);
+    if(tagItem->collection != nullptr) {
+        QMessageBox mb("Question",
+                       "Delete collection permanently?",
+                       QMessageBox::Question,
+                       QMessageBox::Yes,
+                       QMessageBox::No | QMessageBox::Default,
+                       QMessageBox::Cancel);
 
-    if(mb.exec() == QMessageBox::Ok)
-    {
-        saveTreeState();
-        BeginDialogUpdate();
-        tagCollectionTreeAdapter.beginResetModel();
+        int mbResult = mb.exec();
+        if(mbResult != QMessageBox::Cancel)
+        {
+            saveTreeState();
+            treeAdapter.beginResetModel();
 
-        QString new_path = removeTagSubItems(tagItem);
+            TagDispatcherItem *parentItem = tagItem->parent;
+            model.DeleteTagItem(tagItem, mbResult == QMessageBox::Yes);
 
-        tagCollectionTreeAdapter.endResetModel();
-        EndDialogUpdate();
-        loadTreeState(new_path);
+            treeAdapter.endResetModel();
+            loadTreeState(parentItem);
+        }
+    } else {
+        QMessageBox mb("Confirmation",
+                       "Are you shure to remove element? Element will be deleted permanently.",
+                       QMessageBox::Question,
+                       QMessageBox::Ok | QMessageBox::Default,
+                       QMessageBox::Cancel,
+                       QMessageBox::NoButton);
+
+        if(mb.exec() == QMessageBox::Ok)
+        {
+            saveTreeState();
+            treeAdapter.beginResetModel();
+
+            TagDispatcherItem *parentItem = tagItem->parent;
+            model.DeleteTagItem(tagItem, true);
+
+            treeAdapter.endResetModel();
+            loadTreeState(parentItem);
+        }
     }
 }
 
@@ -357,30 +361,12 @@ void TagDispatcherDialog::on_editBtn_clicked()
     }
 }
 
-void TagDispatcherDialog::on_newTagBtn_clicked()
-{
-    QModelIndex index = ui->tagTreeView->currentIndex();
-    TagItem *tagItem = static_cast<TagItem*>(index.internalPointer());
-    if(tagItem->tag != nullptr) { tagItem = tagItem->parent; }
-
-    saveTreeState();
-    BeginDialogUpdate();
-
-    TagItem *newItem = TagCreateDialog::createTag(this, tagItem);
-
-    tagCollectionTreeAdapter.beginResetModel();
-    tagCollectionTreeAdapter.endResetModel();
-
-    EndDialogUpdate();
-    loadTreeState(newItem->path);
-}
-
 void TagDispatcherDialog::on_okBtn_clicked()
 {
     QModelIndex index = ui->tagTreeView->currentIndex();
-    selectResult = static_cast<TagItem*>(index.internalPointer());
+    selectedResult = static_cast<TagDispatcherItem*>(index.internalPointer());
 
-    if((selectResult != nullptr) && (selectResult->tag != nullptr))
+    if((selectedResult != nullptr) && (selectedResult->tag != nullptr))
     {
         close();
     }
@@ -398,6 +384,6 @@ void TagDispatcherDialog::on_okBtn_clicked()
 
 void TagDispatcherDialog::on_cancelBtn_clicked()
 {
-    //selectResult = nullptr;
+    selectedResult = nullptr;
     close();
 }
