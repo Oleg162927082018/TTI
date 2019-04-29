@@ -385,6 +385,7 @@ void RunManager::beginTest(PlanQueueItem *plan)
                               tstInf->exeCommand, tstInf->argumentList,
                               tstInf->workingFullFolderName);
 
+    tstInf->consoleOutput.append(tstInf->workingFullFolderName + ">" + tstInf->exeCommand);
 
     //Prepare benchmark, previous and other results output folder names
     if(plan->processedTestCaseCompressionLevel > 0)
@@ -477,6 +478,7 @@ void RunManager::endTest(TestInfo *testInfo, PlanQueueItem *plan)
     if(testInfo->isSaveOutput)
     {
         //Save console output
+        testInfo->consoleOutput.append("EXIT CODE: " + QString::number(testInfo->testResult.exitCode));
         DBManager::SaveTestConsoleOutput(plan->processedTestCaseFullFileName,
                                          plan->processedTestCaseRunName,
                                          testInfo->testName, &(testInfo->consoleOutput));

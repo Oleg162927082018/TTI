@@ -126,6 +126,7 @@ TagFolder *TagManager::NewTagFolder(TagFolder *parent, QString name, QString des
 
     tagFolder->name = name;
     tagFolder->owner = parent->owner;
+    tagFolder->parent = parent;
     tagFolder->description = description;
     parent->folders.append(tagFolder);
 
@@ -174,16 +175,19 @@ QString TagManager::GetTagLink(Tag *tag)
         parent = parent->parent;
     }
 
-    return parent->name + "://" + link + tag->name;
+    //Have to use "tag" because QUrl parse incorrectly a long schema name
+    //Have to use ":///" instead "://" because QUrl convert upper case in host name to lower case
+    //So all important info will be in the path property of QUrl
+    return "tag:///" + parent->name + "/" + link + tag->name;
 }
 
 Tag *TagManager::getTagByLink(QString tagLink)
 {
-    int p = tagLink.indexOf(':');
+    int p = tagLink.indexOf('/', 7);
     if(p < 0) { return nullptr; }
 
-    QString collectionName = tagLink.left(p);
-    QString tail = tagLink.mid(p + 3);
+    QString collectionName = tagLink.mid(7, p - 7);
+    QString tail = tagLink.mid(p + 1);
 
     TagCollection *tagCollection = nullptr;
     for(int i = 0; i < tagCollections.length(); i++)

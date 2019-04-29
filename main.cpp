@@ -1,4 +1,4 @@
-#include "GUI/MainWindow/View/mainwindow.h"
+#include "UI/MainWindow/View/mainwindow.h"
 #include <QApplication>
 
 #include "Common/DllManager/dllmanager.h"

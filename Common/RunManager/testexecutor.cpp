@@ -27,8 +27,8 @@ void TestExecutor::run()
     shExecInfo.fMask = nullptr;
     shExecInfo.hwnd = nullptr;
     shExecInfo.lpVerb = L"runas";
-    shExecInfo.lpFile = L"D:/Home/Total Test Integrator/lib/PhantomJS/test-ready/phantomjs.exe";
-    shExecInfo.lpParameters = L"\"D:/Home/Total Test Integrator/lib/PhantomJS/test-ready/scripts/OpenStartPage/OpenStartPage.js\" http://ya.ru \"D:/temp\"";
+    shExecInfo.lpFile = L"D:/Home/Total_Test_Integrator/lib/PhantomJS/test-ready/phantomjs.exe";
+    shExecInfo.lpParameters = L"\"D:/Home/Total_Test_Integrator/lib/PhantomJS/test-ready/scripts/OpenStartPage/OpenStartPage.js\" http://ya.ru \"D:/temp\"";
     shExecInfo.lpDirectory = nullptr;
     shExecInfo.nShow = SW_HIDE;
     shExecInfo.hInstApp = nullptr;
