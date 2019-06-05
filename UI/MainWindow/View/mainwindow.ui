@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Total Test Integrator 2.4</string>
+   <string notr="true">Total Test Integrator</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../../tti-res.qrc">
+    <normaloff>:/Resources/tti.ico</normaloff>:/Resources/tti.ico</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="enabled">
@@ -795,7 +799,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1328</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1297,6 +1301,8 @@ p, li { white-space: pre-wrap; }
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="../../../tti-res.qrc"/>
+ </resources>
  <connections/>
 </ui>

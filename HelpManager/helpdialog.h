@@ -15,7 +15,7 @@ class HelpDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit HelpDialog(QHelpEngine *helpEng, QWidget *parent = 0);
+    explicit HelpDialog(QHelpEngine *helpEng, QWidget *parent = nullptr);
     ~HelpDialog();
 
     void showHelp(int activeTab);

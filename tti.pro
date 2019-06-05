@@ -1,7 +1,7 @@
-VERSION = 2.4.0.1
+VERSION = 0.1.0.0
 QMAKE_TARGET_PRODUCT = Total Test Integrator
 QMAKE_TARGET_DESCRIPTION = Test-case integrator
-QMAKE_TARGET_COPYRIGHT = Copyright\xA9 Oleg Kopyev 2016-2017
+QMAKE_TARGET_COPYRIGHT = Copyright\xA9 Oleg Kopyev 2018-2019
 
 QT       += core gui xml help
 
@@ -163,7 +163,10 @@ FORMS    += UI/MainWindow/View/mainwindow.ui \
     UI/Tag/Create/View/tag-collection-create-dialog.ui \
     HelpManager/helpdialog.ui
 
-RESOURCES +=
+RESOURCES += \
+    tti-res.qrc
+
+RC_ICONS += Resources/tti.ico
 
 DISTFILES += \
     FAQ/Others.txt \

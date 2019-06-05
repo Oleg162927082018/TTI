@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/" lang="all">
+        <file>Resources/tti.ico</file>
+    </qresource>
+</RCC>
